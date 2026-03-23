@@ -69,6 +69,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
         icon: TrendingUp,
         href: "/flooding/sweep",
         badge: "NEW",
+        active: false,
       },
     ],
   },
