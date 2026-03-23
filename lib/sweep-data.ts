@@ -199,6 +199,12 @@ export function aggregateFieldSeries(field: FieldData): WaterCutPoint[] {
   return result
 }
 
+// Pre-computed aggregates frozen at module load — avoids SSR/client hydration drift
+export const precomputedPadSeries: Record<string, WaterCutPoint[]> = Object.fromEntries(
+  fieldData.pads.map((pad) => [pad.id, aggregatePadSeries(pad)])
+)
+export const precomputedFieldSeries: WaterCutPoint[] = aggregateFieldSeries(fieldData)
+
 // Цвета скважин и кустов для графика
 export const SERIES_COLORS = [
   "#e8a045", // amber

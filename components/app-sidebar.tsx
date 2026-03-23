@@ -5,23 +5,10 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
-  LayoutDashboard,
   Droplets,
-  Gauge,
-  Map,
-  BarChart3,
-  Activity,
-  FlaskConical,
-  FileText,
-  Settings,
   ChevronDown,
   ChevronRight,
-  Layers,
   TrendingUp,
-  Database,
-  AlertTriangle,
-  BookOpen,
-  Users,
   Bell,
   LogOut,
   Grid3x3,
@@ -35,123 +22,16 @@ type NavItem = {
   children?: NavItem[]
 }
 
-const navGroups: { group: string; items: NavItem[] }[] = [
+const navItems: NavItem[] = [
   {
-    group: "Основное",
-    items: [
-      {
-        label: "Обзор месторождения",
-        icon: LayoutDashboard,
-        href: "/",
-      },
-    ],
+    label: "Топ ИДН",
+    icon: TrendingUp,
+    href: "/idn",
   },
   {
-    group: "Заводнение",
-    items: [
-      {
-        label: "Топ ИДН",
-        icon: TrendingUp,
-        href: "/idn",
-      },
-      {
-        label: "Ячейки заводнения",
-        icon: Grid3x3,
-        href: "/flood-cells",
-      },
-      {
-        label: "КИН и охват",
-        icon: Gauge,
-        href: "/flooding/sweep",
-      },
-      {
-        label: "Приёмистость",
-        icon: Droplets,
-        href: "/flooding/injectivity",
-      },
-    ],
-  },
-  {
-    group: "Скважины",
-    items: [
-      {
-        label: "Фонд скважин",
-        icon: Layers,
-        href: "/wells/fund",
-      },
-      {
-        label: "Замерные данные",
-        icon: Activity,
-        href: "/wells/measurements",
-      },
-      {
-        label: "ГТМ и мероприятия",
-        icon: FlaskConical,
-        href: "/wells/gtm",
-        badge: "3",
-      },
-      {
-        label: "Профили добычи",
-        icon: BarChart3,
-        href: "/wells/production",
-      },
-    ],
-  },
-  {
-    group: "Геология",
-    items: [
-      {
-        label: "Пластовые данные",
-        icon: Database,
-        href: "/geology/reservoir",
-      },
-      {
-        label: "Карты пласта",
-        icon: Map,
-        href: "/geology/maps",
-      },
-    ],
-  },
-  {
-    group: "Анализ",
-    items: [
-      {
-        label: "Аналитика добычи",
-        icon: TrendingUp,
-        href: "/analytics/production",
-      },
-      {
-        label: "Отчёты",
-        icon: FileText,
-        href: "/analytics/reports",
-      },
-    ],
-  },
-  {
-    group: "Система",
-    items: [
-      {
-        label: "Тревоги",
-        icon: AlertTriangle,
-        href: "/system/alerts",
-        badge: "2",
-      },
-      {
-        label: "Справочники",
-        icon: BookOpen,
-        href: "/system/references",
-      },
-      {
-        label: "Пользователи",
-        icon: Users,
-        href: "/system/users",
-      },
-      {
-        label: "Настройки",
-        icon: Settings,
-        href: "/system/settings",
-      },
-    ],
+    label: "Ячейки заводнения",
+    icon: Grid3x3,
+    href: "/flood-cells",
   },
 ]
 
@@ -234,21 +114,14 @@ export function AppSidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-4" aria-label="Основная навигация">
-        {navGroups.map(({ group, items }) => (
-          <div key={group}>
-            <p className="mb-1 px-2.5 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">
-              {group}
-            </p>
-            <ul className="space-y-0.5" role="list">
-              {items.map((item) => (
-                <li key={item.label} className="relative">
-                  <NavItemRow item={item} pathname={pathname} />
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Основная навигация">
+        <ul className="space-y-0.5" role="list">
+          {navItems.map((item) => (
+            <li key={item.label} className="relative">
+              <NavItemRow item={item} pathname={pathname} />
+            </li>
+          ))}
+        </ul>
       </nav>
 
       {/* Footer */}
