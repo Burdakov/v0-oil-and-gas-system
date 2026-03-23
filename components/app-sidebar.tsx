@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
   LayoutDashboard,
@@ -15,7 +16,6 @@ import {
   Settings,
   ChevronDown,
   ChevronRight,
-  CircleDot,
   Layers,
   TrendingUp,
   Database,
@@ -24,13 +24,13 @@ import {
   Users,
   Bell,
   LogOut,
+  Grid3x3,
 } from "lucide-react"
 
 type NavItem = {
   label: string
   icon: React.ElementType
   href?: string
-  active?: boolean
   badge?: string
   children?: NavItem[]
 }
@@ -43,7 +43,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
         label: "Обзор месторождения",
         icon: LayoutDashboard,
         href: "/",
-        active: true,
       },
     ],
   },
@@ -51,25 +50,24 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     group: "Заводнение",
     items: [
       {
-        label: "Схема заводнения",
-        icon: Droplets,
-        children: [
-          { label: "Активные контуры", icon: CircleDot, href: "/flooding/active" },
-          { label: "Нагнетательные скважины", icon: Droplets, href: "/flooding/injectors" },
-          { label: "Карта изобар", icon: Map, href: "/flooding/isobar-map" },
-        ],
+        label: "Топ ИДН",
+        icon: TrendingUp,
+        href: "/idn",
       },
       {
-        label: "Приёмистость",
-        icon: Gauge,
-        href: "/flooding/injectivity",
+        label: "Ячейки заводнения",
+        icon: Grid3x3,
+        href: "/flood-cells",
       },
       {
         label: "КИН и охват",
-        icon: TrendingUp,
+        icon: Gauge,
         href: "/flooding/sweep",
-        badge: "NEW",
-        active: false,
+      },
+      {
+        label: "Приёмистость",
+        icon: Droplets,
+        href: "/flooding/injectivity",
       },
     ],
   },
@@ -112,11 +110,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
         icon: Map,
         href: "/geology/maps",
       },
-      {
-        label: "Корреляция пластов",
-        icon: Layers,
-        href: "/geology/correlation",
-      },
     ],
   },
   {
@@ -126,11 +119,6 @@ const navGroups: { group: string; items: NavItem[] }[] = [
         label: "Аналитика добычи",
         icon: TrendingUp,
         href: "/analytics/production",
-      },
-      {
-        label: "Контроль разработки",
-        icon: BarChart3,
-        href: "/analytics/development",
       },
       {
         label: "Отчёты",
@@ -143,7 +131,7 @@ const navGroups: { group: string; items: NavItem[] }[] = [
     group: "Система",
     items: [
       {
-        label: "Тревоги и оповещения",
+        label: "Тревоги",
         icon: AlertTriangle,
         href: "/system/alerts",
         badge: "2",
@@ -170,13 +158,16 @@ const navGroups: { group: string; items: NavItem[] }[] = [
 function NavItemRow({
   item,
   depth = 0,
+  pathname,
 }: {
   item: NavItem
   depth?: number
+  pathname: string
 }) {
   const [open, setOpen] = useState(false)
   const hasChildren = item.children && item.children.length > 0
   const Icon = item.icon
+  const isActive = item.href ? pathname === item.href : false
 
   return (
     <div>
@@ -184,37 +175,28 @@ function NavItemRow({
         href={item.href ?? "#"}
         onClick={hasChildren ? (e) => { e.preventDefault(); setOpen(!open) } : undefined}
         className={cn(
-          "group flex items-center gap-2.5 rounded px-2.5 py-1.5 text-sm transition-all duration-150",
-          depth === 0
-            ? "font-medium"
-            : "font-normal text-[13px]",
-          item.active
+          "group relative flex items-center gap-2.5 rounded px-2.5 py-1.5 transition-all duration-150",
+          depth === 0 ? "text-sm font-medium" : "text-[13px] font-normal",
+          isActive
             ? "bg-primary/10 text-primary"
             : "text-muted-foreground hover:bg-accent hover:text-foreground",
           depth > 0 && "ml-4 pl-2",
         )}
       >
-        {item.active && depth === 0 && (
+        {isActive && depth === 0 && (
           <span className="absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-r bg-primary" />
         )}
         <Icon
           size={15}
           className={cn(
             "shrink-0 transition-colors",
-            item.active ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
+            isActive ? "text-primary" : "text-muted-foreground group-hover:text-foreground",
           )}
           strokeWidth={1.5}
         />
         <span className="flex-1 truncate">{item.label}</span>
         {item.badge && (
-          <span
-            className={cn(
-              "rounded px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide",
-              item.badge === "NEW"
-                ? "bg-primary/15 text-primary"
-                : "bg-muted text-muted-foreground",
-            )}
-          >
+          <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide text-muted-foreground">
             {item.badge}
           </span>
         )}
@@ -227,7 +209,7 @@ function NavItemRow({
       {hasChildren && open && (
         <div className="mt-0.5 space-y-0.5">
           {item.children!.map((child) => (
-            <NavItemRow key={child.label} item={child} depth={depth + 1} />
+            <NavItemRow key={child.label} item={child} depth={depth + 1} pathname={pathname} />
           ))}
         </div>
       )}
@@ -236,6 +218,8 @@ function NavItemRow({
 }
 
 export function AppSidebar() {
+  const pathname = usePathname()
+
   return (
     <aside className="relative flex h-screen w-[220px] shrink-0 flex-col border-r border-border bg-sidebar">
       {/* Logo / Project */}
@@ -244,7 +228,7 @@ export function AppSidebar() {
           <Droplets size={13} className="text-primary-foreground" strokeWidth={2} />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-foreground leading-tight">ГеоФлюд</p>
+          <p className="truncate text-[13px] font-semibold text-foreground leading-tight">ТопРейт</p>
           <p className="truncate text-[10px] text-muted-foreground leading-tight tracking-wide uppercase">Ромашкинское м-е</p>
         </div>
       </div>
@@ -259,7 +243,7 @@ export function AppSidebar() {
             <ul className="space-y-0.5" role="list">
               {items.map((item) => (
                 <li key={item.label} className="relative">
-                  <NavItemRow item={item} />
+                  <NavItemRow item={item} pathname={pathname} />
                 </li>
               ))}
             </ul>
