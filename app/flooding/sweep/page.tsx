@@ -6,6 +6,8 @@ import {
   fieldData,
   precomputedPadSeries,
   precomputedFieldSeries,
+  precomputedFieldStats,
+  precomputedPadStats,
   type WellData,
   type PadData,
 } from "@/lib/sweep-data"
@@ -141,25 +143,21 @@ export default function SweepPage() {
   // Build chart series based on selection
   const { series, chartTitle, stats } = useMemo(() => {
     if (selection.level === "field") {
-      // One line per pad + field aggregate — use pre-computed to avoid SSR/client drift
-      const fieldSeries = precomputedFieldSeries
+      // All values come from frozen module-level constants — no recomputation
       const padSeries: SeriesEntry[] = fieldData.pads.map((pad, i) => ({
         id: pad.id,
         label: pad.name,
         data: precomputedPadSeries[pad.id],
         color: SERIES_COLORS[i % SERIES_COLORS.length],
       }))
-      const totalCum = fieldData.pads
-        .flatMap((p) => p.wells.filter((w) => w.type === "producer"))
-        .reduce((acc, w) => acc + (w.series[w.series.length - 1]?.cumOil ?? 0), 0)
-      const finalWc = fieldSeries[fieldSeries.length - 1]?.waterCut ?? 0
+      const fs = precomputedFieldStats
 
       return {
         series: [
           {
             id: "field",
             label: fieldData.name,
-            data: fieldSeries,
+            data: precomputedFieldSeries,
             color: "#e8a045",
             dashed: true,
           } as SeriesEntry,
@@ -167,10 +165,10 @@ export default function SweepPage() {
         ],
         chartTitle: `Месторождение ${fieldData.name} — все кусты`,
         stats: [
-          { label: "Накопленная добыча", value: `${(totalCum / 1000).toFixed(0)} млн т`, sub: "суммарно по фонду" },
-          { label: "Средняя обводнённость", value: `${finalWc.toFixed(1)}%`, sub: "на текущий момент" },
-          { label: "Добывающих скважин", value: `${fieldData.pads.flatMap((p) => p.wells.filter((w) => w.type === "producer")).length}`, sub: "в фонде" },
-          { label: "Активных кустов", value: `${fieldData.pads.length}`, sub: "в разработке" },
+          { label: "Накопленная добыча", value: `${(fs.totalCumOil / 1000).toFixed(0)} млн т`, sub: "суммарно по фонду" },
+          { label: "Средняя обводнённость", value: `${fs.finalWaterCut.toFixed(1)}%`, sub: "на текущий момент" },
+          { label: "Добывающих скважин", value: `${fs.producerCount}`, sub: "в фонде" },
+          { label: "Активных кустов", value: `${fs.padCount}`, sub: "в разработке" },
         ],
       }
     }
@@ -185,12 +183,8 @@ export default function SweepPage() {
         data: well.series,
         color: SERIES_COLORS[i % SERIES_COLORS.length],
       }))
-      const totalCum = producers.reduce(
-        (acc, w) => acc + (w.series[w.series.length - 1]?.cumOil ?? 0),
-        0
-      )
-      const finalWc = padAggregate[padAggregate.length - 1]?.waterCut ?? 0
-      const activeCount = producers.filter((w) => w.status === "active").length
+      // Use frozen pad stats — never recomputed on client
+      const ps = precomputedPadStats[pad.id]
 
       return {
         series: [
@@ -205,10 +199,10 @@ export default function SweepPage() {
         ],
         chartTitle: `${pad.name} — характеристика обводнённости`,
         stats: [
-          { label: "Накопленная добыча куста", value: `${totalCum.toFixed(0)} тыс. т`, sub: "суммарно по кусту" },
-          { label: "Обводнённость куста", value: `${finalWc.toFixed(1)}%`, sub: "средняя" },
-          { label: "Добывающих скважин", value: `${producers.length}`, sub: `${activeCount} активных` },
-          { label: "Год ввода", value: `${Math.min(...producers.map((w) => w.startYear))}`, sub: "первая скважина" },
+          { label: "Накопленная добыча куста", value: `${ps.totalCumOil.toFixed(0)} тыс. т`, sub: "суммарно по кусту" },
+          { label: "Обводнённость куста", value: `${ps.finalWaterCut.toFixed(1)}%`, sub: "средняя" },
+          { label: "Добывающих скважин", value: `${ps.producerCount}`, sub: `${ps.activeCount} активных` },
+          { label: "Год ввода", value: `${ps.firstYear}`, sub: "первая скважина" },
         ],
       }
     }
