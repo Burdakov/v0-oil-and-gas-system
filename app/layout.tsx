@@ -7,7 +7,7 @@ const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'ГеоФлюд — система управления заводнением',
+  title: 'ТопРейт — система управления разработкой',
   description: 'Система управления заводнением и разработкой нефтяных и газовых скважин для инженеров-геологов',
   generator: 'v0.app',
   icons: {

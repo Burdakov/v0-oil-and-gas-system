@@ -27,6 +27,17 @@ export type FieldData = {
   pads: PadData[]
 }
 
+// Deterministic pseudo-random (mulberry32 seeded PRNG) — no Math.random() at module level
+function makePrng(seed: number) {
+  let s = seed >>> 0
+  return () => {
+    s += 0x6d2b79f5
+    let t = Math.imul(s ^ (s >>> 15), 1 | s)
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+    return ((t ^ (t >>> 14)) >>> 0) / 0x100000000
+  }
+}
+
 // Генератор характеристики обводнённости по логистической кривой
 function generateWaterCutSeries(
   startCumOil: number,
@@ -36,15 +47,17 @@ function generateWaterCutSeries(
   wcMax: number,     // максимальная обводнённость, %
   midpoint: number,  // точка перегиба (тыс. т)
   steepness: number, // крутизна
-  noise: number = 1.2
+  noise: number = 1.2,
+  seed: number = 42,
 ): WaterCutPoint[] {
+  const rng = makePrng(seed)
   const result: WaterCutPoint[] = []
   const step = (endCumOil - startCumOil) / steps
   for (let i = 0; i <= steps; i++) {
     const cumOil = +(startCumOil + i * step).toFixed(1)
     const logistic = wcMax / (1 + Math.exp(-steepness * (cumOil - midpoint)))
     const rawWc = wc0 + (logistic - wcMax / 2) * (wcMax - wc0) / (wcMax / 2)
-    const jitter = (Math.random() - 0.5) * noise
+    const jitter = (rng() - 0.5) * noise
     const waterCut = +Math.min(wcMax, Math.max(wc0, rawWc + jitter)).toFixed(1)
     result.push({ cumOil, waterCut })
   }
@@ -61,15 +74,15 @@ export const fieldData: FieldData = {
       wells: [
         {
           id: "R-071", name: "Р-071", type: "producer", status: "active", startYear: 2008,
-          series: generateWaterCutSeries(0, 420, 42, 5, 91, 280, 0.012, 1.0),
+          series: generateWaterCutSeries(0, 420, 42, 5, 91, 280, 0.012, 1.0, 101),
         },
         {
           id: "R-088", name: "Р-088", type: "producer", status: "inactive", startYear: 2010,
-          series: generateWaterCutSeries(0, 185, 37, 12, 88, 130, 0.018, 1.5),
+          series: generateWaterCutSeries(0, 185, 37, 12, 88, 130, 0.018, 1.5, 102),
         },
         {
           id: "R-094", name: "Р-094", type: "producer", status: "active", startYear: 2012,
-          series: generateWaterCutSeries(0, 310, 31, 8, 85, 210, 0.014, 0.9),
+          series: generateWaterCutSeries(0, 310, 31, 8, 85, 210, 0.014, 0.9, 103),
         },
       ],
     },
@@ -79,15 +92,15 @@ export const fieldData: FieldData = {
       wells: [
         {
           id: "R-147", name: "Р-147", type: "producer", status: "active", startYear: 2005,
-          series: generateWaterCutSeries(0, 680, 68, 4, 94, 440, 0.010, 0.8),
+          series: generateWaterCutSeries(0, 680, 68, 4, 94, 440, 0.010, 0.8, 201),
         },
         {
           id: "R-155", name: "Р-155", type: "producer", status: "active", startYear: 2006,
-          series: generateWaterCutSeries(0, 590, 59, 6, 92, 380, 0.011, 1.1),
+          series: generateWaterCutSeries(0, 590, 59, 6, 92, 380, 0.011, 1.1, 202),
         },
         {
           id: "R-204", name: "Р-204", type: "producer", status: "warning", startYear: 2009,
-          series: generateWaterCutSeries(0, 245, 49, 15, 87, 160, 0.017, 1.3),
+          series: generateWaterCutSeries(0, 245, 49, 15, 87, 160, 0.017, 1.3, 203),
         },
       ],
     },
@@ -97,15 +110,15 @@ export const fieldData: FieldData = {
       wells: [
         {
           id: "R-295", name: "Р-295", type: "producer", status: "warning", startYear: 2011,
-          series: generateWaterCutSeries(0, 275, 55, 10, 89, 180, 0.015, 1.2),
+          series: generateWaterCutSeries(0, 275, 55, 10, 89, 180, 0.015, 1.2, 301),
         },
         {
           id: "R-311", name: "Р-311", type: "producer", status: "active", startYear: 2013,
-          series: generateWaterCutSeries(0, 195, 39, 3, 82, 140, 0.016, 0.7),
+          series: generateWaterCutSeries(0, 195, 39, 3, 82, 140, 0.016, 0.7, 302),
         },
         {
           id: "R-328", name: "Р-328", type: "producer", status: "active", startYear: 2015,
-          series: generateWaterCutSeries(0, 158, 32, 7, 80, 110, 0.018, 1.0),
+          series: generateWaterCutSeries(0, 158, 32, 7, 80, 110, 0.018, 1.0, 303),
         },
       ],
     },
@@ -115,19 +128,24 @@ export const fieldData: FieldData = {
       wells: [
         {
           id: "R-412", name: "Р-412", type: "producer", status: "active", startYear: 2016,
-          series: generateWaterCutSeries(0, 132, 26, 5, 78, 95, 0.020, 0.9),
+          series: generateWaterCutSeries(0, 132, 26, 5, 78, 95, 0.020, 0.9, 401),
         },
         {
           id: "R-431", name: "Р-431", type: "producer", status: "active", startYear: 2018,
-          series: generateWaterCutSeries(0, 98, 20, 2, 72, 72, 0.022, 0.8),
+          series: generateWaterCutSeries(0, 98, 20, 2, 72, 72, 0.022, 0.8, 402),
         },
         {
           id: "R-448", name: "Р-448", type: "producer", status: "inactive", startYear: 2019,
-          series: generateWaterCutSeries(0, 54, 18, 8, 75, 40, 0.025, 1.4),
+          series: generateWaterCutSeries(0, 54, 18, 8, 75, 40, 0.025, 1.4, 403),
         },
       ],
     },
   ],
+}
+
+// Round to 1 decimal place using integer arithmetic — avoids toFixed() cross-env drift
+function r1(x: number): number {
+  return Math.round(x * 10) / 10
 }
 
 // Агрегация серии куста (среднее обводнённости по суммарной накопленной добыче)
@@ -135,14 +153,12 @@ export function aggregatePadSeries(pad: PadData): WaterCutPoint[] {
   const producers = pad.wells.filter((w) => w.type === "producer")
   if (producers.length === 0) return []
 
-  // Определяем диапазон накопленной добычи (максимальный по всем скважинам куста)
   const maxCum = Math.max(...producers.map((w) => w.series[w.series.length - 1]?.cumOil ?? 0))
   const STEPS = 40
   const result: WaterCutPoint[] = []
 
   for (let i = 0; i <= STEPS; i++) {
-    const cumOil = +(maxCum * i / STEPS).toFixed(1)
-    // Интерполируем обводнённость каждой скважины в этой точке
+    const cumOil = r1(maxCum * i / STEPS)
     const wcs = producers.map((w) => {
       const s = w.series
       if (cumOil <= s[0].cumOil) return s[0].waterCut
@@ -153,7 +169,7 @@ export function aggregatePadSeries(pad: PadData): WaterCutPoint[] {
       const t = (cumOil - a.cumOil) / (b.cumOil - a.cumOil)
       return a.waterCut + t * (b.waterCut - a.waterCut)
     })
-    const avgWc = +(wcs.reduce((a, v) => a + v, 0) / wcs.length).toFixed(1)
+    const avgWc = r1(wcs.reduce((a, v) => a + v, 0) / wcs.length)
     result.push({ cumOil, waterCut: avgWc })
   }
   return result
@@ -169,7 +185,7 @@ export function aggregateFieldSeries(field: FieldData): WaterCutPoint[] {
   const result: WaterCutPoint[] = []
 
   for (let i = 0; i <= STEPS; i++) {
-    const cumOil = +(maxCum * i / STEPS).toFixed(1)
+    const cumOil = r1(maxCum * i / STEPS)
     const wcs = allProducers.map((w) => {
       const s = w.series
       if (cumOil <= s[0].cumOil) return s[0].waterCut
@@ -180,11 +196,17 @@ export function aggregateFieldSeries(field: FieldData): WaterCutPoint[] {
       const t = (cumOil - a.cumOil) / (b.cumOil - a.cumOil)
       return a.waterCut + t * (b.waterCut - a.waterCut)
     })
-    const avgWc = +(wcs.reduce((a, v) => a + v, 0) / wcs.length).toFixed(1)
+    const avgWc = r1(wcs.reduce((a, v) => a + v, 0) / wcs.length)
     result.push({ cumOil, waterCut: avgWc })
   }
   return result
 }
+
+// Pre-computed aggregates frozen at module load — avoids SSR/client hydration drift
+export const precomputedPadSeries: Record<string, WaterCutPoint[]> = Object.fromEntries(
+  fieldData.pads.map((pad) => [pad.id, aggregatePadSeries(pad)])
+)
+export const precomputedFieldSeries: WaterCutPoint[] = aggregateFieldSeries(fieldData)
 
 // Цвета скважин и кустов для графика
 export const SERIES_COLORS = [

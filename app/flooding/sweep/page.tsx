@@ -4,8 +4,8 @@ import { useState, useMemo } from "react"
 import { ChevronRight, ChevronDown, TrendingUp, Download, RefreshCw, Info } from "lucide-react"
 import {
   fieldData,
-  aggregatePadSeries,
-  aggregateFieldSeries,
+  precomputedPadSeries,
+  precomputedFieldSeries,
   type WellData,
   type PadData,
 } from "@/lib/sweep-data"
@@ -141,12 +141,12 @@ export default function SweepPage() {
   // Build chart series based on selection
   const { series, chartTitle, stats } = useMemo(() => {
     if (selection.level === "field") {
-      // One line per pad + field aggregate
-      const fieldSeries = aggregateFieldSeries(fieldData)
+      // One line per pad + field aggregate — use pre-computed to avoid SSR/client drift
+      const fieldSeries = precomputedFieldSeries
       const padSeries: SeriesEntry[] = fieldData.pads.map((pad, i) => ({
         id: pad.id,
         label: pad.name,
-        data: aggregatePadSeries(pad),
+        data: precomputedPadSeries[pad.id],
         color: SERIES_COLORS[i % SERIES_COLORS.length],
       }))
       const totalCum = fieldData.pads
@@ -178,7 +178,7 @@ export default function SweepPage() {
     if (selection.level === "pad") {
       const pad = fieldData.pads.find((p) => p.id === selection.padId)!
       const producers = pad.wells.filter((w) => w.type === "producer")
-      const padAggregate = aggregatePadSeries(pad)
+      const padAggregate = precomputedPadSeries[pad.id]
       const wellSeries: SeriesEntry[] = producers.map((well, i) => ({
         id: well.id,
         label: well.name,
@@ -362,7 +362,7 @@ export default function SweepPage() {
                       Тек. обводн., %
                     </th>
                     <th className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                      Статус
+                      С��атус
                     </th>
                   </tr>
                 </thead>
