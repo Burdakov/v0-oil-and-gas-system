@@ -143,19 +143,22 @@ export const fieldData: FieldData = {
   ],
 }
 
+// Round to 1 decimal place using integer arithmetic — avoids toFixed() cross-env drift
+function r1(x: number): number {
+  return Math.round(x * 10) / 10
+}
+
 // Агрегация серии куста (среднее обводнённости по суммарной накопленной добыче)
 export function aggregatePadSeries(pad: PadData): WaterCutPoint[] {
   const producers = pad.wells.filter((w) => w.type === "producer")
   if (producers.length === 0) return []
 
-  // Определяем диапазон накопленной добычи (максимальный по всем скважинам куста)
   const maxCum = Math.max(...producers.map((w) => w.series[w.series.length - 1]?.cumOil ?? 0))
   const STEPS = 40
   const result: WaterCutPoint[] = []
 
   for (let i = 0; i <= STEPS; i++) {
-    const cumOil = +(maxCum * i / STEPS).toFixed(1)
-    // Интерполируем обводнённость каждой скважины в этой точке
+    const cumOil = r1(maxCum * i / STEPS)
     const wcs = producers.map((w) => {
       const s = w.series
       if (cumOil <= s[0].cumOil) return s[0].waterCut
@@ -166,7 +169,7 @@ export function aggregatePadSeries(pad: PadData): WaterCutPoint[] {
       const t = (cumOil - a.cumOil) / (b.cumOil - a.cumOil)
       return a.waterCut + t * (b.waterCut - a.waterCut)
     })
-    const avgWc = +(wcs.reduce((a, v) => a + v, 0) / wcs.length).toFixed(1)
+    const avgWc = r1(wcs.reduce((a, v) => a + v, 0) / wcs.length)
     result.push({ cumOil, waterCut: avgWc })
   }
   return result
@@ -182,7 +185,7 @@ export function aggregateFieldSeries(field: FieldData): WaterCutPoint[] {
   const result: WaterCutPoint[] = []
 
   for (let i = 0; i <= STEPS; i++) {
-    const cumOil = +(maxCum * i / STEPS).toFixed(1)
+    const cumOil = r1(maxCum * i / STEPS)
     const wcs = allProducers.map((w) => {
       const s = w.series
       if (cumOil <= s[0].cumOil) return s[0].waterCut
@@ -193,7 +196,7 @@ export function aggregateFieldSeries(field: FieldData): WaterCutPoint[] {
       const t = (cumOil - a.cumOil) / (b.cumOil - a.cumOil)
       return a.waterCut + t * (b.waterCut - a.waterCut)
     })
-    const avgWc = +(wcs.reduce((a, v) => a + v, 0) / wcs.length).toFixed(1)
+    const avgWc = r1(wcs.reduce((a, v) => a + v, 0) / wcs.length)
     result.push({ cumOil, waterCut: avgWc })
   }
   return result

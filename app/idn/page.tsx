@@ -1,10 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { DevelopmentMap } from "@/components/idn/development-map"
 import { WellTable } from "@/components/idn/well-table"
-import { fieldData } from "@/lib/idn-data"
+import { ProductionChart } from "@/components/idn/production-chart"
+import {
+  fieldData,
+  fieldTimeSeries,
+  clusterTimeSeries,
+  wellTimeSeries,
+} from "@/lib/idn-data"
 
 export default function IdnPage() {
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
@@ -18,6 +24,26 @@ export default function IdnPage() {
   const selectedWell = fieldData.licenseAreas
     .flatMap((la) => la.clusters.flatMap((cl) => cl.wells))
     .find((w) => w.id === selectedWellId)
+
+  // Resolve which time series to show based on selection level
+  const { chartData, chartTitle } = useMemo(() => {
+    if (selectedWellId && wellTimeSeries[selectedWellId]) {
+      return {
+        chartData: wellTimeSeries[selectedWellId],
+        chartTitle: `Скв. ${selectedWell?.name ?? selectedWellId}`,
+      }
+    }
+    if (selectedClusterId && clusterTimeSeries[selectedClusterId]) {
+      return {
+        chartData: clusterTimeSeries[selectedClusterId],
+        chartTitle: selectedCluster?.name ?? selectedClusterId,
+      }
+    }
+    return {
+      chartData: fieldTimeSeries,
+      chartTitle: "Месторождение в целом",
+    }
+  }, [selectedWellId, selectedClusterId, selectedWell, selectedCluster])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans antialiased">
@@ -55,34 +81,34 @@ export default function IdnPage() {
           </div>
         </header>
 
-        {/* Map + Table split layout */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* Map panel */}
-          <div className="flex-[2] border-b border-border overflow-hidden min-h-0">
+        {/* Top row: Map (left 55%) + Chart (right 45%) */}
+        <div className="flex flex-[3] min-h-0 border-b border-border overflow-hidden">
+          {/* Map */}
+          <div className="w-[55%] overflow-hidden border-r border-border">
             <DevelopmentMap
-              onWellSelect={(id) => {
-                setSelectedWellId(id)
-              }}
-              onClusterSelect={(id) => {
-                setSelectedClusterId(id)
-              }}
+              onWellSelect={(id) => setSelectedWellId(id)}
+              onClusterSelect={(id) => setSelectedClusterId(id)}
             />
           </div>
+          {/* Chart */}
+          <div className="flex-1 overflow-hidden">
+            <ProductionChart data={chartData} title={chartTitle} />
+          </div>
+        </div>
 
-          {/* Table panel */}
-          <div className="flex-[1] overflow-auto min-h-0">
-            <WellTable
-              selectedClusterId={selectedClusterId}
-              selectedWellId={selectedWellId}
-              onClusterSelect={(id) => {
-                setSelectedClusterId((prev) => (prev === id ? null : id))
-                setSelectedWellId(null)
-              }}
-              onWellSelect={(id) => {
-                setSelectedWellId((prev) => (prev === id ? null : id))
-              }}
-            />
-          </div>
+        {/* Bottom row: Table */}
+        <div className="flex-[2] overflow-auto min-h-0">
+          <WellTable
+            selectedClusterId={selectedClusterId}
+            selectedWellId={selectedWellId}
+            onClusterSelect={(id) => {
+              setSelectedClusterId((prev) => (prev === id ? null : id))
+              setSelectedWellId(null)
+            }}
+            onWellSelect={(id) => {
+              setSelectedWellId((prev) => (prev === id ? null : id))
+            }}
+          />
         </div>
       </div>
     </div>

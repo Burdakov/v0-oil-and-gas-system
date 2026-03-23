@@ -43,9 +43,14 @@ export type Field = {
   licenseAreas: LicenseArea[]
 }
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function rand(min: number, max: number, decimals = 1) {
-  return parseFloat((Math.random() * (max - min) + min).toFixed(decimals))
+// ── Seeded PRNG (mulberry32) — no Math.random() at module level ───────────────
+let _seed = 1234567
+function rand(min: number, max: number, decimals = 1): number {
+  _seed += 0x6d2b79f5
+  let t = Math.imul(_seed ^ (_seed >>> 15), 1 | _seed)
+  t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+  const r = ((t ^ (t >>> 14)) >>> 0) / 0x100000000
+  return parseFloat((r * (max - min) + min).toFixed(decimals))
 }
 
 function makeWell(
@@ -203,6 +208,95 @@ export const fieldData: Field = {
       ],
     },
   ],
+}
+
+// ── Time-series types ─────────────────────────────────────────────────────────
+export type TimeSeriesPoint = {
+  date: string          // ISO date string "YYYY-MM-DD"
+  // Actual (fact)
+  liquidRate: number    // Дебит жидкости факт, т/сут
+  oilRate: number       // Дебит нефти факт, т/сут
+  bottomholePressure: number // Забойное давление факт, атм
+  // Infrastructure limit
+  infraLimit: number    // Ограничение инфраструктуры по жидкости, т/сут
+  // Potential (recommended mode)
+  liquidRatePot: number
+  oilRatePot: number
+  bottomholePressurePot: number
+}
+
+// Generate 26 weekly points covering ~6 months ending today (2026-03-23)
+function generateTimeSeries(
+  baseLiquid: number,
+  baseOil: number,
+  baseBhp: number,
+  infraLimit: number,
+): TimeSeriesPoint[] {
+  const points: TimeSeriesPoint[] = []
+  // End date fixed for determinism
+  const endMs = new Date("2026-03-23").getTime()
+  const weekMs = 7 * 24 * 3600 * 1000
+  const n = 26
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1)
+    const d = new Date(endMs - (n - 1 - i) * weekMs)
+    const dateStr = d.toISOString().slice(0, 10)
+    // Fact: slight decline trend + noise
+    const liq = baseLiquid * (1 - 0.08 * t) + rand(-baseLiquid * 0.04, baseLiquid * 0.04, 1)
+    const oil = baseOil * (1 - 0.12 * t) + rand(-baseOil * 0.04, baseOil * 0.04, 1)
+    const bhp = baseBhp * (1 + 0.05 * t) + rand(-3, 3, 1)
+    // Potential: always above fact, stable or slight growth
+    const liqPot = liq * (1 + rand(0.08, 0.22, 2))
+    const oilPot = oil * (1 + rand(0.10, 0.30, 2))
+    const bhpPot = bhp * (1 - rand(0.05, 0.15, 2))
+    points.push({
+      date: dateStr,
+      liquidRate: Math.max(0, parseFloat(liq.toFixed(1))),
+      oilRate: Math.max(0, parseFloat(oil.toFixed(1))),
+      bottomholePressure: Math.max(20, parseFloat(bhp.toFixed(1))),
+      infraLimit,
+      liquidRatePot: parseFloat(liqPot.toFixed(1)),
+      oilRatePot: parseFloat(oilPot.toFixed(1)),
+      bottomholePressurePot: Math.max(20, parseFloat(bhpPot.toFixed(1))),
+    })
+  }
+  return points
+}
+
+// Field-level aggregate time series (sum of all producers)
+export const fieldTimeSeries: TimeSeriesPoint[] = generateTimeSeries(4800, 1450, 95, 5500)
+
+// Per-cluster time series keyed by cluster id
+export const clusterTimeSeries: Record<string, TimeSeriesPoint[]> = {
+  "cl-101": generateTimeSeries(820, 240, 88, 950),
+  "cl-102": generateTimeSeries(640, 175, 82, 750),
+  "cl-201": generateTimeSeries(710, 200, 91, 820),
+  "cl-202": generateTimeSeries(930, 280, 94, 1100),
+  "cl-203": generateTimeSeries(580, 160, 86, 680),
+  "cl-301": generateTimeSeries(490, 145, 78, 560),
+  "cl-302": generateTimeSeries(630, 195, 83, 740),
+}
+
+// Per-well time series keyed by well id (producers only)
+export const wellTimeSeries: Record<string, TimeSeriesPoint[]> = {
+  "w-1011": generateTimeSeries(310, 92, 85, 370),
+  "w-1012": generateTimeSeries(285, 80, 82, 340),
+  "w-1013": generateTimeSeries(225, 68, 79, 260),
+  "w-1021": generateTimeSeries(340, 97, 88, 400),
+  "w-1022": generateTimeSeries(300, 78, 84, 350),
+  "w-2011": generateTimeSeries(260, 74, 90, 310),
+  "w-2012": generateTimeSeries(240, 65, 87, 290),
+  "w-2013": generateTimeSeries(210, 61, 83, 250),
+  "w-2021": generateTimeSeries(390, 115, 96, 460),
+  "w-2022": generateTimeSeries(340, 98, 93, 400),
+  "w-2023": generateTimeSeries(200, 67, 88, 240),
+  "w-2031": generateTimeSeries(315, 90, 85, 375),
+  "w-2032": generateTimeSeries(265, 70, 82, 305),
+  "w-3011": generateTimeSeries(250, 75, 77, 290),
+  "w-3012": generateTimeSeries(240, 70, 74, 270),
+  "w-3021": generateTimeSeries(335, 100, 81, 390),
+  "w-3022": generateTimeSeries(200, 62, 79, 240),
+  "w-3023": generateTimeSeries(295, 95, 83, 350),
 }
 
 // Flat cluster list for convenience
