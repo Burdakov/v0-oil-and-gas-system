@@ -4,6 +4,7 @@ import { useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { WellControlMap } from "@/components/well-control/control-map"
 import { WellControlTable } from "@/components/well-control/control-table"
+import { WellProductionChart } from "@/components/well-control/production-chart"
 import { wellControlData } from "@/lib/well-control-data"
 
 export default function WellControlPage() {
@@ -59,13 +60,20 @@ export default function WellControlPage() {
           </div>
         </header>
 
-        {/* Map (top) + Table (bottom) */}
+        {/* Top row: Chart (left 45%) + Map (right 55%) */}
         <div className="flex flex-[2] min-h-0 border-b border-border overflow-hidden">
-          <WellControlMap
-            selectedWellId={selectedWellId}
-            onWellSelect={(id) => setSelectedWellId(id)}
-            onClusterSelect={(id) => setSelectedClusterId(id)}
-          />
+          {/* Production chart */}
+          <div className="w-[45%] overflow-hidden">
+            <WellProductionChart selectedWellId={selectedWellId} />
+          </div>
+          {/* Decline map */}
+          <div className="flex-1 overflow-hidden">
+            <WellControlMap
+              selectedWellId={selectedWellId}
+              onWellSelect={(id) => setSelectedWellId(id)}
+              onClusterSelect={(id) => setSelectedClusterId(id)}
+            />
+          </div>
         </div>
 
         <div className="flex-[3] overflow-hidden min-h-0">

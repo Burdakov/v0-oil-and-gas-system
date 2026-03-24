@@ -91,9 +91,9 @@ export function DashboardContent() {
       {/* Top bar */}
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="text-foreground font-medium">Обзор месторождения</span>
+          <span className="text-foreground font-medium">{"\u041e\u0431\u0437\u043e\u0440 \u043c\u0435\u0441\u0442\u043e\u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f"}</span>
           <ChevronRight size={13} />
-          <span>Ромашкинское</span>
+          <span>{"\u0420\u043e\u043c\u0430\u0448\u043a\u0438\u043d\u0441\u043a\u043e\u0435"}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground tabular-nums">
