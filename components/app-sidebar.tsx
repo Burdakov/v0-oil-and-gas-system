@@ -12,6 +12,7 @@ import {
   Bell,
   LogOut,
   Grid3x3,
+  Layers,
 } from "lucide-react"
 
 type NavItem = {
@@ -23,6 +24,11 @@ type NavItem = {
 }
 
 const navItems: NavItem[] = [
+  {
+    label: "Контроль фонда",
+    icon: Layers,
+    href: "/well-control",
+  },
   {
     label: "Топ ИДН",
     icon: TrendingUp,

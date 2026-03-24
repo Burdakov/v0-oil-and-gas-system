@@ -208,6 +208,36 @@ export const precomputedPadSeries: Record<string, WaterCutPoint[]> = Object.from
 )
 export const precomputedFieldSeries: WaterCutPoint[] = aggregateFieldSeries(fieldData)
 
+// Pre-computed scalar stats frozen at module level — never recomputed on client
+const _allProducers = fieldData.pads.flatMap((p) => p.wells.filter((w) => w.type === "producer"))
+
+export const precomputedFieldStats = {
+  totalCumOil: _allProducers.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumOil ?? 0), 0),
+  finalWaterCut: precomputedFieldSeries[precomputedFieldSeries.length - 1]?.waterCut ?? 0,
+  producerCount: _allProducers.length,
+  padCount: fieldData.pads.length,
+} as const
+
+export const precomputedPadStats: Record<string, {
+  totalCumOil: number
+  finalWaterCut: number
+  producerCount: number
+  activeCount: number
+  firstYear: number
+}> = Object.fromEntries(
+  fieldData.pads.map((pad) => {
+    const producers = pad.wells.filter((w) => w.type === "producer")
+    const series = precomputedPadSeries[pad.id]
+    return [pad.id, {
+      totalCumOil: producers.reduce((s, w) => s + (w.series[w.series.length - 1]?.cumOil ?? 0), 0),
+      finalWaterCut: series[series.length - 1]?.waterCut ?? 0,
+      producerCount: producers.length,
+      activeCount: producers.filter((w) => w.status === "active").length,
+      firstYear: Math.min(...producers.map((w) => w.startYear)),
+    }]
+  })
+)
+
 // Цвета скважин и кустов для графика
 export const SERIES_COLORS = [
   "#e8a045", // amber
