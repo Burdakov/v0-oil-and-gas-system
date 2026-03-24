@@ -142,8 +142,8 @@ export function AppSidebar() {
             АС
           </div>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-[12px] font-medium text-foreground leading-tight">Алексеев С.В.</p>
-            <p className="truncate text-[10px] text-muted-foreground leading-tight">Инженер-геолог</p>
+            <p className="truncate text-[12px] font-medium text-foreground leading-tight">{"\u0410\u043b\u0435\u043a\u0441\u0435\u0435\u0432 \u0421.\u0412."}</p>
+            <p className="truncate text-[10px] text-muted-foreground leading-tight">{"\u0418\u043d\u0436\u0435\u043d\u0435\u0440-\u0433\u0435\u043e\u043b\u043e\u0433"}</p>
           </div>
           <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Выйти">
             <LogOut size={13} strokeWidth={1.5} />

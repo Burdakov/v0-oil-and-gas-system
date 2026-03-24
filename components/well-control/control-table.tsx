@@ -159,11 +159,13 @@ export function WellControlTable({
 
       {/* Column header */}
       <div className="grid gap-0 border-b border-border bg-muted/30 px-4 py-1.5 shrink-0"
-        style={{ gridTemplateColumns: "1fr 90px 90px 90px 160px 130px 170px" }}>
+        style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Скважина</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-400/70">↓Кпрод</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-400/70">↓Рпл</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-rose-400/70">↑Обв</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-300/80">↓Нефть<br/>т/сут</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/70">↓Жидк.<br/>т/сут</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Рекомендация</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Принять</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Мероприятие</span>
@@ -173,33 +175,66 @@ export function WellControlTable({
       <div className="flex-1 overflow-y-auto">
         {grouped.map((area) => (
           <div key={area.areaId}>
-            {/* Area row */}
-            <button
-              onClick={() => toggleArea(area.areaId)}
-              className="flex w-full items-center gap-2 border-b border-border bg-card/60 px-4 py-1.5 text-left hover:bg-accent/40 transition-colors"
-            >
-              {expandedAreas.has(area.areaId)
-                ? <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
-                : <ChevronRight size={12} className="shrink-0 text-muted-foreground" />}
-              <span className="text-[11px] font-bold uppercase tracking-widest text-foreground/70">{area.areaName}</span>
-              <span className="ml-1 text-[10px] text-muted-foreground">
-                {area.clusters.reduce((s, c) => s + c.wells.length, 0)} скважин
-              </span>
-            </button>
+            {/* Area row with subtotals */}
+            {(() => {
+              const areaWells = area.clusters.flatMap((c) => c.wells)
+              const areaOil = areaWells.reduce((s, w) => s + w.oilDecline, 0)
+              const areaLiq = areaWells.reduce((s, w) => s + w.liquidDecline, 0)
+              return (
+                <button
+                  onClick={() => toggleArea(area.areaId)}
+                  className="grid w-full items-center border-b border-border bg-card/60 px-4 py-1.5 text-left hover:bg-accent/40 transition-colors"
+                  style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                >
+                  <div className="flex items-center gap-2">
+                    {expandedAreas.has(area.areaId)
+                      ? <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
+                      : <ChevronRight size={12} className="shrink-0 text-muted-foreground" />}
+                    <span className="text-[11px] font-bold uppercase tracking-widest text-foreground/70">{area.areaName}</span>
+                    <span className="text-[10px] text-muted-foreground">{areaWells.length} скважин</span>
+                  </div>
+                  <span />
+                  <span />
+                  <span />
+                  <span className="text-[11px] font-semibold text-amber-300 tabular-nums">−{areaOil.toFixed(1)}</span>
+                  <span className="text-[11px] font-semibold text-cyan-400 tabular-nums">−{areaLiq.toFixed(1)}</span>
+                  <span />
+                  <span />
+                  <span />
+                </button>
+              )
+            })()}
 
             {expandedAreas.has(area.areaId) && area.clusters.map((cluster) => (
               <div key={cluster.clusterId}>
-                {/* Cluster row */}
-                <button
-                  onClick={() => toggleCluster(cluster.clusterId)}
-                  className="flex w-full items-center gap-2 border-b border-border bg-card/30 px-7 py-1 text-left hover:bg-accent/30 transition-colors"
-                >
-                  {expandedClusters.has(cluster.clusterId)
-                    ? <ChevronDown size={11} className="shrink-0 text-muted-foreground/60" />
-                    : <ChevronRight size={11} className="shrink-0 text-muted-foreground/60" />}
-                  <span className="text-[10.5px] font-semibold text-muted-foreground">{cluster.clusterName}</span>
-                  <span className="ml-1 text-[10px] text-muted-foreground/50">{cluster.wells.length} скв.</span>
-                </button>
+                {/* Cluster row with subtotals */}
+                {(() => {
+                  const clOil = cluster.wells.reduce((s, w) => s + w.oilDecline, 0)
+                  const clLiq = cluster.wells.reduce((s, w) => s + w.liquidDecline, 0)
+                  return (
+                    <button
+                      onClick={() => toggleCluster(cluster.clusterId)}
+                      className="grid w-full items-center border-b border-border bg-card/30 px-7 py-1 text-left hover:bg-accent/30 transition-colors"
+                      style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                    >
+                      <div className="flex items-center gap-1.5">
+                        {expandedClusters.has(cluster.clusterId)
+                          ? <ChevronDown size={11} className="shrink-0 text-muted-foreground/60" />
+                          : <ChevronRight size={11} className="shrink-0 text-muted-foreground/60" />}
+                        <span className="text-[10.5px] font-semibold text-muted-foreground">{cluster.clusterName}</span>
+                        <span className="text-[10px] text-muted-foreground/50">{cluster.wells.length} скв.</span>
+                      </div>
+                      <span />
+                      <span />
+                      <span />
+                      <span className="text-[10.5px] font-medium text-amber-300/80 tabular-nums">−{clOil.toFixed(1)}</span>
+                      <span className="text-[10.5px] font-medium text-cyan-400/70 tabular-nums">−{clLiq.toFixed(1)}</span>
+                      <span />
+                      <span />
+                      <span />
+                    </button>
+                  )
+                })()}
 
                 {expandedClusters.has(cluster.clusterId) && cluster.wells.map((well) => {
                   const rs = rowStates.get(well.wellId) ?? { actionStatus: "pending", gtmOption: null, showGtm: false }
@@ -212,7 +247,7 @@ export function WellControlTable({
                         "grid items-start gap-0 border-b border-border/50 px-11 py-2 transition-colors",
                         isSelected ? "bg-primary/8" : "hover:bg-accent/20",
                       )}
-                      style={{ gridTemplateColumns: "1fr 90px 90px 90px 160px 130px 170px" }}
+                      style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
                       onClick={() => onWellSelect(isSelected ? null : well.wellId)}
                     >
                       {/* Well name + dominant factor */}
@@ -238,6 +273,16 @@ export function WellControlTable({
                       {/* Обв increase bar */}
                       <div onClick={(e) => e.stopPropagation()}>
                         <Bar value={well.obvDecline} max={18} color="bg-rose-400" />
+                      </div>
+
+                      {/* Oil decline */}
+                      <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[11px] font-semibold tabular-nums text-amber-300">−{well.oilDecline.toFixed(1)}</span>
+                      </div>
+
+                      {/* Liquid decline */}
+                      <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[11px] font-semibold tabular-nums text-cyan-400">−{well.liquidDecline.toFixed(1)}</span>
                       </div>
 
                       {/* Recommendation text */}
