@@ -167,13 +167,16 @@ export function WellControlTable({
 
       {/* Column header */}
       <div className="grid gap-0 border-b border-border bg-muted/30 px-4 py-1.5 shrink-0"
-        style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}>
+        style={{ gridTemplateColumns: "1fr 80px 80px 80px 72px 72px 72px 56px 80px 150px 120px 160px" }}>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Скважина</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-orange-400/70">↓Кпрод</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-blue-400/70">↓Рпл</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-rose-400/70">↑Обв</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-amber-300/80">↓Нефть<br/>т/сут</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-cyan-400/70">↓Жидк.<br/>т/сут</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-violet-400/70">↓Рзаб<br/>атм</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-red-400/70">Фонд</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-fuchsia-400/70">ВСП<br/>т/сут</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Рекомендация</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Принять</span>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Мероприятие</span>
@@ -188,6 +191,9 @@ export function WellControlTable({
               const areaWells = area.clusters.flatMap((c) => c.wells)
               const areaOil = areaWells.reduce((s, w) => s + w.oilDecline, 0)
               const areaLiq = areaWells.reduce((s, w) => s + w.liquidDecline, 0)
+              const areaBhp = areaWells.reduce((s, w) => s + w.bhpDecline, 0) / Math.max(1, areaWells.length)
+              const stoppedCount = areaWells.filter((w) => w.wellStatus === "stopped").length
+              const areaVsp = areaWells.reduce((s, w) => s + w.hiddenVsp, 0)
               return (
                   <button
                     onClick={() => {
@@ -200,23 +206,28 @@ export function WellControlTable({
                       "grid w-full items-center border-b border-border px-4 py-1.5 text-left transition-colors",
                       selectedAreaId === area.areaId ? "bg-primary/8" : "bg-card/60 hover:bg-accent/40",
                     )}
-                    style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                    style={{ gridTemplateColumns: "1fr 80px 80px 80px 72px 72px 72px 56px 80px 150px 120px 160px" }}
                   >
                   <div className="flex items-center gap-2">
                     {expandedAreas.has(area.areaId)
                       ? <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
                       : <ChevronRight size={12} className="shrink-0 text-muted-foreground" />}
                     <span className="text-[11px] font-bold uppercase tracking-widest text-foreground/70">{area.areaName}</span>
-                    <span className="text-[10px] text-muted-foreground">{areaWells.length} скважин</span>
+                    <span className="text-[10px] text-muted-foreground">{areaWells.length} скв.</span>
                   </div>
                   <span />
                   <span />
                   <span />
                   <span className="text-[11px] font-semibold text-amber-300 tabular-nums">−{areaOil.toFixed(1)}</span>
                   <span className="text-[11px] font-semibold text-cyan-400 tabular-nums">−{areaLiq.toFixed(1)}</span>
-                  <span />
-                  <span />
-                  <span />
+                  <span className="text-[11px] font-semibold text-violet-400 tabular-nums">−{areaBhp.toFixed(1)}</span>
+                  <span className={cn("text-[11px] font-semibold tabular-nums", stoppedCount > 0 ? "text-red-400" : "text-muted-foreground/40")}>
+                    {stoppedCount > 0 ? `${stoppedCount}` : "—"}
+                  </span>
+                  <span className={cn("text-[11px] font-semibold text-fuchsia-400 tabular-nums", areaVsp === 0 && "text-muted-foreground/40")}>
+                    {areaVsp > 0 ? `−${areaVsp.toFixed(1)}` : "—"}
+                  </span>
+                  <span /><span /><span />
                 </button>
               )
             })()}
@@ -227,6 +238,9 @@ export function WellControlTable({
                 {(() => {
                   const clOil = cluster.wells.reduce((s, w) => s + w.oilDecline, 0)
                   const clLiq = cluster.wells.reduce((s, w) => s + w.liquidDecline, 0)
+                  const clBhp = cluster.wells.reduce((s, w) => s + w.bhpDecline, 0) / Math.max(1, cluster.wells.length)
+                  const clStopped = cluster.wells.filter((w) => w.wellStatus === "stopped").length
+                  const clVsp = cluster.wells.reduce((s, w) => s + w.hiddenVsp, 0)
                   return (
                     <button
                       onClick={() => {
@@ -238,7 +252,7 @@ export function WellControlTable({
                         "grid w-full items-center border-b border-border px-7 py-1 text-left transition-colors",
                         selectedClusterId === cluster.clusterId ? "bg-primary/8" : "bg-card/30 hover:bg-accent/30",
                       )}
-                      style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                      style={{ gridTemplateColumns: "1fr 80px 80px 80px 72px 72px 72px 56px 80px 150px 120px 160px" }}
                     >
                       <div className="flex items-center gap-1.5">
                         {expandedClusters.has(cluster.clusterId)
@@ -252,9 +266,14 @@ export function WellControlTable({
                       <span />
                       <span className="text-[10.5px] font-medium text-amber-300/80 tabular-nums">−{clOil.toFixed(1)}</span>
                       <span className="text-[10.5px] font-medium text-cyan-400/70 tabular-nums">−{clLiq.toFixed(1)}</span>
-                      <span />
-                      <span />
-                      <span />
+                      <span className="text-[10.5px] font-medium text-violet-400/70 tabular-nums">−{clBhp.toFixed(1)}</span>
+                      <span className={cn("text-[10.5px] font-medium tabular-nums", clStopped > 0 ? "text-red-400/80" : "text-muted-foreground/30")}>
+                        {clStopped > 0 ? `${clStopped}` : "—"}
+                      </span>
+                      <span className={cn("text-[10.5px] font-medium text-fuchsia-400/70 tabular-nums", clVsp === 0 && "text-muted-foreground/30")}>
+                        {clVsp > 0 ? `−${clVsp.toFixed(1)}` : "—"}
+                      </span>
+                      <span /><span /><span />
                     </button>
                   )
                 })()}
@@ -268,16 +287,23 @@ export function WellControlTable({
                       key={well.wellId}
                       className={cn(
                         "grid items-start gap-0 border-b border-border/50 px-11 py-2 transition-colors",
-                        isSelected ? "bg-primary/8" : "hover:bg-accent/20",
+                        isSelected ? "bg-primary/8" : well.wellStatus === "stopped" ? "bg-red-500/5 hover:bg-red-500/10" : "hover:bg-accent/20",
                       )}
-                      style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                      style={{ gridTemplateColumns: "1fr 80px 80px 80px 72px 72px 72px 56px 80px 150px 120px 160px" }}
                       onClick={() => onWellSelect(isSelected ? null : well.wellId)}
                     >
-                      {/* Well name + dominant factor */}
+                      {/* Well name + dominant factor + stop badge */}
                       <div className="flex flex-col gap-0.5">
-                        <span className={cn("text-[12px] font-semibold font-mono", isSelected ? "text-primary" : "text-foreground")}>
-                          {well.wellName}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={cn("text-[12px] font-semibold font-mono", isSelected ? "text-primary" : well.wellStatus === "stopped" ? "text-red-400" : "text-foreground")}>
+                            {well.wellName}
+                          </span>
+                          {well.wellStatus === "stopped" && (
+                            <span className="rounded bg-red-500/15 px-1 py-0.5 text-[9px] font-bold uppercase tracking-wide text-red-400">
+                              стоп
+                            </span>
+                          )}
+                        </div>
                         <span className={cn("text-[10px] rounded px-1 py-0.5 w-fit", FACTOR_BG[well.dominantFactor])}>
                           {FACTOR_LABEL[well.dominantFactor]}
                         </span>
@@ -299,13 +325,36 @@ export function WellControlTable({
                       </div>
 
                       {/* Oil decline */}
-                      <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                         <span className="text-[11px] font-semibold tabular-nums text-amber-300">−{well.oilDecline.toFixed(1)}</span>
                       </div>
 
                       {/* Liquid decline */}
-                      <div className="flex flex-col gap-0.5" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
                         <span className="text-[11px] font-semibold tabular-nums text-cyan-400">−{well.liquidDecline.toFixed(1)}</span>
+                      </div>
+
+                      {/* Рзаб decline */}
+                      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                        <span className="text-[11px] font-semibold tabular-nums text-violet-400">−{well.bhpDecline.toFixed(1)}</span>
+                      </div>
+
+                      {/* Fund change (stopped = red loss) */}
+                      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                        {well.wellStatus === "stopped" ? (
+                          <span className="rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-bold text-red-400">−1</span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/30">—</span>
+                        )}
+                      </div>
+
+                      {/* Hidden VSP */}
+                      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+                        {well.hiddenVsp > 0 ? (
+                          <span className="text-[11px] font-semibold tabular-nums text-fuchsia-400">−{well.hiddenVsp.toFixed(1)}</span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/30">—</span>
+                        )}
                       </div>
 
                       {/* Recommendation text */}

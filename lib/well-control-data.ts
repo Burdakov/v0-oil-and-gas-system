@@ -20,6 +20,12 @@ export type WellDecline = {
   // Absolute production declines, т/сут
   oilDecline: number    // суммарное снижение дебита нефти, т/сут
   liquidDecline: number // суммарное снижение дебита жидкости, т/сут
+  // Забойное давление
+  bhpDecline: number    // снижение Рзаб, атм
+  // Состояние скважины
+  wellStatus: "active" | "stopped" // остановленные учитываются как снижение фонда
+  // Скрытый ВСП (виртуальная скважина-перемычка)
+  hiddenVsp: number     // объём скрытого ВСП, т/сут (0 = нет)
   // Dominant factor driving the decline
   dominantFactor: DeclineFactor
   // Current values
@@ -101,6 +107,17 @@ function buildDeclineData(): WellDecline[] {
         const liquidDecline = parseFloat((baseLiquid * (kprodDecline / 100 * 0.6 + rplDecline / 100 * 0.3 + obvDecline / 100 * 0.1)).toFixed(1))
         const oilDecline = parseFloat((baseOil * (kprodDecline / 100 * 0.55 + rplDecline / 100 * 0.35 + obvDecline / 100 * 0.1)).toFixed(1))
 
+        // Рзаб decline: driven primarily by Рпл drop and Кпрод decline
+        const bhpDecline = parseFloat((rpl * (rplDecline / 100 * 0.7 + kprodDecline / 100 * 0.2)).toFixed(1))
+
+        // ~15% wells are stopped — deterministic by index
+        const wellStatus: "active" | "stopped" = (idx % 7 === 3) ? "stopped" : "active"
+
+        // ~25% wells have hidden VSP — non-zero volume for those
+        const hiddenVsp = (idx % 4 === 1)
+          ? parseFloat((baseOil * r(0.05, 0.22, 3)).toFixed(1))
+          : 0
+
         result.push({
           wellId: w.id,
           wellName: w.name,
@@ -113,6 +130,9 @@ function buildDeclineData(): WellDecline[] {
           obvDecline,
           oilDecline,
           liquidDecline,
+          bhpDecline,
+          wellStatus,
+          hiddenVsp,
           dominantFactor: dominant,
           kprod,
           rpl,

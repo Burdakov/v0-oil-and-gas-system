@@ -4,61 +4,61 @@ import { Activity, AlertTriangle, Droplets, Gauge, TrendingUp, TrendingDown, Min
 
 const kpiCards = [
   {
-    label: "Суточная добыча нефти",
+    label: "\u0421\u0443\u0442\u043e\u0447\u043d\u0430\u044f \u0434\u043e\u0431\u044b\u0447\u0430 \u043d\u0435\u0444\u0442\u0438",
     value: "1 847",
-    unit: "т/сут",
+    unit: "\u0442/\u0441\u0443\u0442",
     delta: "+3.2%",
     trend: "up" as const,
-    sub: "план: 1 800 т/сут",
+    sub: "\u043f\u043b\u0430\u043d: 1 800 \u0442/\u0441\u0443\u0442",
     icon: Activity,
     accent: "text-status-active",
   },
   {
-    label: "Закачка воды",
+    label: "\u0417\u0430\u043a\u0430\u0447\u043a\u0430 \u0432\u043e\u0434\u044b",
     value: "4 213",
-    unit: "м³/сут",
+    unit: "\u043c\u00b3/\u0441\u0443\u0442",
     delta: "-1.7%",
     trend: "down" as const,
-    sub: "план: 4 400 м³/сут",
+    sub: "\u043f\u043b\u0430\u043d: 4 400 \u043c\u00b3/\u0441\u0443\u0442",
     icon: Droplets,
     accent: "text-chart-2",
   },
   {
-    label: "Обводнённость",
+    label: "\u041e\u0431\u0432\u043e\u0434\u043d\u0451\u043d\u043d\u043e\u0441\u0442\u044c",
     value: "68.4",
     unit: "%",
     delta: "+0.3%",
     trend: "down" as const,
-    sub: "за последние 30 суток",
+    sub: "\u0437\u0430 \u043f\u043e\u0441\u043b\u0435\u0434\u043d\u0438\u0435 30 \u0441\u0443\u0442\u043e\u043a",
     icon: Gauge,
     accent: "text-status-warning",
   },
   {
-    label: "Действующий фонд",
+    label: "\u0414\u0435\u0439\u0441\u0442\u0432\u0443\u044e\u0449\u0438\u0439 \u0444\u043e\u043d\u0434",
     value: "214 / 231",
-    unit: "скв.",
+    unit: "\u0441\u043a\u0432.",
     delta: "0",
     trend: "flat" as const,
-    sub: "17 скважин в простое",
+    sub: "17 \u0441\u043a\u0432\u0430\u0436\u0438\u043d \u0432 \u043f\u0440\u043e\u0441\u0442\u043e\u0435",
     icon: TrendingUp,
     accent: "text-foreground",
   },
 ]
 
 const wellStatusRows = [
-  { id: "Р-147", pad: "Куст 12", type: "Добывающая", oil: "38.4", water: "71.2", status: "active" },
-  { id: "Р-204", pad: "Куст 7",  type: "Добывающая", oil: "12.1", water: "84.6", status: "warning" },
-  { id: "Н-031", pad: "Куст 7",  type: "Нагнетательная", oil: "—",   water: "820",  status: "active" },
-  { id: "Р-088", pad: "Куст 3",  type: "Добывающая", oil: "0.0",  water: "—",    status: "inactive" },
-  { id: "Н-019", pad: "Куст 3",  type: "Нагнетательная", oil: "—",   water: "1 043",status: "active" },
-  { id: "Р-311", pad: "Куст 18", type: "Добывающая", oil: "55.7", water: "48.3", status: "active" },
-  { id: "Р-295", pad: "Куст 18", type: "Добывающая", oil: "21.3", water: "77.9", status: "warning" },
+  { id: "\u0420-147", pad: "\u041a\u0443\u0441\u0442 12", type: "\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0430\u044f",    oil: "38.4", water: "71.2",  status: "active" },
+  { id: "\u0420-204", pad: "\u041a\u0443\u0441\u0442 7",  type: "\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0430\u044f",    oil: "12.1", water: "84.6",  status: "warning" },
+  { id: "\u041d-031", pad: "\u041a\u0443\u0441\u0442 7",  type: "\u041d\u0430\u0433\u043d\u0435\u0442\u0430\u0442\u0435\u043b\u044c\u043d\u0430\u044f", oil: "\u2014",  water: "820",   status: "active" },
+  { id: "\u0420-088", pad: "\u041a\u0443\u0441\u0442 3",  type: "\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0430\u044f",    oil: "0.0",  water: "\u2014", status: "inactive" },
+  { id: "\u041d-019", pad: "\u041a\u0443\u0441\u0442 3",  type: "\u041d\u0430\u0433\u043d\u0435\u0442\u0430\u0442\u0435\u043b\u044c\u043d\u0430\u044f", oil: "\u2014",  water: "1 043", status: "active" },
+  { id: "\u0420-311", pad: "\u041a\u0443\u0441\u0442 18", type: "\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0430\u044f",    oil: "55.7", water: "48.3",  status: "active" },
+  { id: "\u0420-295", pad: "\u041a\u0443\u0441\u0442 18", type: "\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0430\u044f",    oil: "21.3", water: "77.9",  status: "warning" },
 ]
 
 const alertsList = [
-  { id: 1, severity: "critical", text: "Р-204: давление на устье ниже нормы — 4.1 МПа", time: "09:14" },
-  { id: 2, severity: "warning",  text: "Н-031: падение приёмистости на 18% за 48 ч",  time: "08:52" },
-  { id: 3, severity: "info",     text: "Р-311: план по дебиту нефти перевыполнен",     time: "07:30" },
+  { id: 1, severity: "critical", text: "\u0420-204: \u0434\u0430\u0432\u043b\u0435\u043d\u0438\u0435 \u043d\u0430 \u0443\u0441\u0442\u044c\u0435 \u043d\u0438\u0436\u0435 \u043d\u043e\u0440\u043c\u044b \u2014 4.1 \u041c\u041f\u0430", time: "09:14" },
+  { id: 2, severity: "warning",  text: "\u041d-031: \u043f\u0430\u0434\u0435\u043d\u0438\u0435 \u043f\u0440\u0438\u0451\u043c\u0438\u0441\u0442\u043e\u0441\u0442\u0438 \u043d\u0430 18% \u0437\u0430 48 \u0447", time: "08:52" },
+  { id: 3, severity: "info",     text: "\u0420-311: \u043f\u043b\u0430\u043d \u043f\u043e \u0434\u0435\u0431\u0438\u0442\u0443 \u043d\u0435\u0444\u0442\u0438 \u043f\u0435\u0440\u0435\u0432\u044b\u043f\u043e\u043b\u043d\u0435\u043d",  time: "07:30" },
 ]
 
 const statusColor: Record<string, string> = {
@@ -68,9 +68,9 @@ const statusColor: Record<string, string> = {
 }
 
 const statusLabel: Record<string, string> = {
-  active:   "Работает",
-  warning:  "Тревога",
-  inactive: "Простой",
+  active:   "\u0420\u0430\u0431\u043e\u0442\u0430\u0435\u0442",
+  warning:  "\u0422\u0440\u0435\u0432\u043e\u0433\u0430",
+  inactive: "\u041f\u0440\u043e\u0441\u0442\u043e\u0439",
 }
 
 const severityColor: Record<string, string> = {
@@ -190,7 +190,7 @@ export function DashboardContent() {
               <table className="w-full text-[12px]" role="table">
                 <thead>
                   <tr className="border-b border-border">
-                    {["Скважина", "Куст", "Тип", "Q нефти, т/сут", "Q воды, м³/сут", "Статус"].map((h) => (
+                    {["\u0421\u043a\u0432\u0430\u0436\u0438\u043d\u0430", "\u041a\u0443\u0441\u0442", "\u0422\u0438\u043f", "Q \u043d\u0435\u0444\u0442\u0438, \u0442/\u0441\u0443\u0442", "Q \u0432\u043e\u0434\u044b, \u043c\u00b3/\u0441\u0443\u0442", "\u0421\u0442\u0430\u0442\u0443\u0441"].map((h) => (
                       <th
                         key={h}
                         className="px-4 py-2 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
@@ -267,11 +267,11 @@ export function DashboardContent() {
               <h2 className="text-[13px] font-semibold text-foreground">{"\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u043f\u043b\u0430\u0441\u0442\u0430"}</h2>
               <dl className="space-y-2">
                 {[
-                  { label: "Пластовое давление", value: "18.3 МПа" },
-                  { label: "Температура пласта",  value: "54 °C" },
-                  { label: "Вязкость нефти",       value: "3.7 мПа·с" },
-                  { label: "Проницаемость",         value: "0.124 мкм²" },
-                  { label: "Пористость",            value: "21.6 %" },
+                  { label: "\u041f\u043b\u0430\u0441\u0442\u043e\u0432\u043e\u0435 \u0434\u0430\u0432\u043b\u0435\u043d\u0438\u0435", value: "18.3 \u041c\u041f\u0430" },
+                  { label: "\u0422\u0435\u043c\u043f\u0435\u0440\u0430\u0442\u0443\u0440\u0430 \u043f\u043b\u0430\u0441\u0442\u0430",  value: "54 \u00b0C" },
+                  { label: "\u0412\u044f\u0437\u043a\u043e\u0441\u0442\u044c \u043d\u0435\u0444\u0442\u0438",       value: "3.7 \u043c\u041f\u0430\u00b7\u0441" },
+                  { label: "\u041f\u0440\u043e\u043d\u0438\u0446\u0430\u0435\u043c\u043e\u0441\u0442\u044c",         value: "0.124 \u043c\u043a\u043c\u00b2" },
+                  { label: "\u041f\u043e\u0440\u0438\u0441\u0442\u043e\u0441\u0442\u044c",            value: "21.6 %" },
                 ].map(({ label, value }) => (
                   <div key={label} className="flex items-center justify-between">
                     <dt className="text-[11px] text-muted-foreground">{label}</dt>
