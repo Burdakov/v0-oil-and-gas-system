@@ -5,7 +5,6 @@ import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
 import {
-  Droplets,
   ChevronDown,
   ChevronRight,
   TrendingUp,
@@ -13,6 +12,7 @@ import {
   LogOut,
   Grid3x3,
   Layers,
+  Zap,
 } from "lucide-react"
 
 type NavItem = {
@@ -109,15 +109,42 @@ export function AppSidebar() {
   return (
     <aside className="relative flex h-screen w-[220px] shrink-0 flex-col border-r border-border bg-sidebar">
       {/* Logo / Project */}
-      <div className="flex h-12 items-center gap-2.5 border-b border-border px-4">
-        <div className="flex h-6 w-6 items-center justify-center rounded bg-primary">
-          <Droplets size={13} className="text-primary-foreground" strokeWidth={2} />
+      <Link href="/" className="group flex h-14 items-center gap-3 border-b border-border px-4 hover:bg-accent/30 transition-colors">
+        {/* Bold angular logo mark */}
+        <div className="relative flex h-8 w-8 shrink-0 items-center justify-center">
+          {/* Outer rhombus background */}
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <polygon
+              points="16,2 30,10 30,22 16,30 2,22 2,10"
+              fill="oklch(0.72 0.16 55)"
+              opacity="0.15"
+            />
+            <polygon
+              points="16,4 28,11 28,21 16,28 4,21 4,11"
+              stroke="oklch(0.72 0.16 55)"
+              strokeWidth="1"
+              fill="none"
+              opacity="0.4"
+            />
+          </svg>
+          <Zap
+            size={16}
+            className="absolute text-primary"
+            strokeWidth={2.5}
+            fill="oklch(0.72 0.16 55)"
+            fillOpacity={0.25}
+          />
         </div>
         <div className="min-w-0">
-          <p className="truncate text-[13px] font-semibold text-foreground leading-tight">ТопРейт</p>
-          <p className="truncate text-[10px] text-muted-foreground leading-tight tracking-wide uppercase">Ромашкинское м-е</p>
+          <p className="truncate text-[15px] font-black tracking-tight text-foreground leading-none">
+            {"\u0422\u043e\u043f"}
+            <span className="text-primary">{"\u0420\u0435\u0439\u0442"}</span>
+          </p>
+          <p className="truncate text-[10px] text-muted-foreground leading-tight tracking-widest uppercase mt-0.5">
+            {"\u0420\u043e\u043c\u0430\u0448\u043a\u0438\u043d\u0441\u043a\u043e\u0435 \u043c-\u0435"}
+          </p>
         </div>
-      </div>
+      </Link>
 
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Основная навигация">
