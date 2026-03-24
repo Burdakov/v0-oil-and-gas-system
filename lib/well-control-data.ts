@@ -17,6 +17,9 @@ export type WellDecline = {
   kprodDecline: number  // % снижения Кпрод
   rplDecline: number    // % снижения Рпл
   obvDecline: number    // % роста Обв (percentage points)
+  // Absolute production declines, т/сут
+  oilDecline: number    // суммарное снижение дебита нефти, т/сут
+  liquidDecline: number // суммарное снижение дебита жидкости, т/сут
   // Dominant factor driving the decline
   dominantFactor: DeclineFactor
   // Current values
@@ -92,6 +95,12 @@ function buildDeclineData(): WellDecline[] {
         const rpl = r(85, 180, 1)
         const obv = w.current.waterCut
 
+        // Absolute declines derived from current rates and relative decline magnitudes
+        const baseLiquid = w.current.liquidRate
+        const baseOil = w.current.oilRate
+        const liquidDecline = parseFloat((baseLiquid * (kprodDecline / 100 * 0.6 + rplDecline / 100 * 0.3 + obvDecline / 100 * 0.1)).toFixed(1))
+        const oilDecline = parseFloat((baseOil * (kprodDecline / 100 * 0.55 + rplDecline / 100 * 0.35 + obvDecline / 100 * 0.1)).toFixed(1))
+
         result.push({
           wellId: w.id,
           wellName: w.name,
@@ -102,6 +111,8 @@ function buildDeclineData(): WellDecline[] {
           kprodDecline,
           rplDecline,
           obvDecline,
+          oilDecline,
+          liquidDecline,
           dominantFactor: dominant,
           kprod,
           rpl,
