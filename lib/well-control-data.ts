@@ -264,6 +264,67 @@ export const wellTimeSeries: Record<string, WellTsPoint[]> = Object.fromEntries(
   ])
 )
 
+// Aggregate multiple well series into one by summing rates, averaging pressures/wc/gor
+function aggregateWellTs(seriesList: WellTsPoint[][]): WellTsPoint[] {
+  if (seriesList.length === 0) return []
+  const n = seriesList[0].length
+  const result: WellTsPoint[] = []
+  for (let i = 0; i < n; i++) {
+    const pts = seriesList.map((s) => s[i])
+    const cnt = pts.length
+    const sum = (fn: (p: WellTsPoint) => number) =>
+      Math.round(pts.reduce((s, p) => s + fn(p), 0) * 10) / 10
+    const mean = (fn: (p: WellTsPoint) => number) =>
+      Math.round((pts.reduce((s, p) => s + fn(p), 0) / cnt) * 10) / 10
+    result.push({
+      date: pts[0].date,
+      liquidFact:          sum((p) => p.liquidFact),
+      liquidVfm:           sum((p) => p.liquidVfm),
+      oilFact:             sum((p) => p.oilFact),
+      waterCut:            mean((p) => p.waterCut),
+      intakePressure:      mean((p) => p.intakePressure),
+      bottomholePressure:  mean((p) => p.bottomholePressure),
+      gasFactor:           mean((p) => p.gasFactor),
+    })
+  }
+  return result
+}
+
+// Cluster aggregate time series keyed by clusterId
+export const clusterTimeSeries: Record<string, WellTsPoint[]> = Object.fromEntries(
+  fieldData.licenseAreas.flatMap((la) =>
+    la.clusters.map((cl) => {
+      const wellIds = cl.wells
+        .filter((w) => w.type === "producer")
+        .map((w) => w.id)
+        .filter((id) => wellTimeSeries[id])
+      return [cl.id, aggregateWellTs(wellIds.map((id) => wellTimeSeries[id]))]
+    })
+  )
+)
+
+// License area aggregate time series keyed by licenseAreaId
+export const licenseAreaTimeSeries: Record<string, WellTsPoint[]> = Object.fromEntries(
+  fieldData.licenseAreas.map((la) => {
+    const wellIds = la.clusters
+      .flatMap((cl) => cl.wells.filter((w) => w.type === "producer").map((w) => w.id))
+      .filter((id) => wellTimeSeries[id])
+    return [la.id, aggregateWellTs(wellIds.map((id) => wellTimeSeries[id]))]
+  })
+)
+
+// Field-wide aggregate
+export const fieldControlTimeSeries: WellTsPoint[] = aggregateWellTs(
+  Object.values(wellTimeSeries)
+)
+
+// Selection type used by page + chart
+export type ChartSelection =
+  | { level: "field" }
+  | { level: "area"; areaId: string; areaName: string }
+  | { level: "cluster"; clusterId: string; clusterName: string }
+  | { level: "well"; wellId: string; wellName: string }
+
 // Group by cluster for map pies
 export type ClusterDeclinePie = {
   clusterId: string

@@ -81,11 +81,19 @@ function groupData(rows: WellDecline[]): GroupedByArea[] {
 export function WellControlTable({
   data,
   selectedWellId,
+  selectedClusterId,
+  selectedAreaId,
   onWellSelect,
+  onClusterSelect,
+  onAreaSelect,
 }: {
   data: WellDecline[]
   selectedWellId: string | null
+  selectedClusterId?: string | null
+  selectedAreaId?: string | null
   onWellSelect: (id: string | null) => void
+  onClusterSelect?: (id: string | null) => void
+  onAreaSelect?: (id: string | null) => void
 }) {
   const [sortField, setSortField] = useState<SortField>("total")
   const [expandedAreas, setExpandedAreas] = useState<Set<string>>(new Set(["la-1", "la-2", "la-3"]))
@@ -181,11 +189,19 @@ export function WellControlTable({
               const areaOil = areaWells.reduce((s, w) => s + w.oilDecline, 0)
               const areaLiq = areaWells.reduce((s, w) => s + w.liquidDecline, 0)
               return (
-                <button
-                  onClick={() => toggleArea(area.areaId)}
-                  className="grid w-full items-center border-b border-border bg-card/60 px-4 py-1.5 text-left hover:bg-accent/40 transition-colors"
-                  style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
-                >
+                  <button
+                    onClick={() => {
+                      toggleArea(area.areaId)
+                      onAreaSelect?.(selectedAreaId === area.areaId ? null : area.areaId)
+                      onClusterSelect?.(null)
+                      onWellSelect(null)
+                    }}
+                    className={cn(
+                      "grid w-full items-center border-b border-border px-4 py-1.5 text-left transition-colors",
+                      selectedAreaId === area.areaId ? "bg-primary/8" : "bg-card/60 hover:bg-accent/40",
+                    )}
+                    style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
+                  >
                   <div className="flex items-center gap-2">
                     {expandedAreas.has(area.areaId)
                       ? <ChevronDown size={12} className="shrink-0 text-muted-foreground" />
@@ -213,8 +229,15 @@ export function WellControlTable({
                   const clLiq = cluster.wells.reduce((s, w) => s + w.liquidDecline, 0)
                   return (
                     <button
-                      onClick={() => toggleCluster(cluster.clusterId)}
-                      className="grid w-full items-center border-b border-border bg-card/30 px-7 py-1 text-left hover:bg-accent/30 transition-colors"
+                      onClick={() => {
+                        toggleCluster(cluster.clusterId)
+                        onClusterSelect?.(selectedClusterId === cluster.clusterId ? null : cluster.clusterId)
+                        onWellSelect(null)
+                      }}
+                      className={cn(
+                        "grid w-full items-center border-b border-border px-7 py-1 text-left transition-colors",
+                        selectedClusterId === cluster.clusterId ? "bg-primary/8" : "bg-card/30 hover:bg-accent/30",
+                      )}
                       style={{ gridTemplateColumns: "1fr 90px 90px 90px 90px 90px 160px 130px 170px" }}
                     >
                       <div className="flex items-center gap-1.5">

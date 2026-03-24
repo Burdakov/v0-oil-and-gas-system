@@ -1,15 +1,33 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { AppSidebar } from "@/components/app-sidebar"
 import { WellControlMap } from "@/components/well-control/control-map"
 import { WellControlTable } from "@/components/well-control/control-table"
 import { WellProductionChart } from "@/components/well-control/production-chart"
-import { wellControlData } from "@/lib/well-control-data"
+import { wellControlData, type ChartSelection } from "@/lib/well-control-data"
 
 export default function WellControlPage() {
   const [selectedWellId, setSelectedWellId] = useState<string | null>(null)
   const [selectedClusterId, setSelectedClusterId] = useState<string | null>(null)
+  const [selectedAreaId, setSelectedAreaId] = useState<string | null>(null)
+
+  // Derive ChartSelection from the most specific selected item
+  const chartSelection = useMemo((): ChartSelection | null => {
+    if (selectedWellId) {
+      const w = wellControlData.find((d) => d.wellId === selectedWellId)
+      if (w) return { level: "well", wellId: w.wellId, wellName: w.wellName }
+    }
+    if (selectedClusterId) {
+      const w = wellControlData.find((d) => d.clusterId === selectedClusterId)
+      if (w) return { level: "cluster", clusterId: w.clusterId, clusterName: w.clusterName }
+    }
+    if (selectedAreaId) {
+      const w = wellControlData.find((d) => d.licenseAreaId === selectedAreaId)
+      if (w) return { level: "area", areaId: w.licenseAreaId, areaName: w.licenseAreaName }
+    }
+    return null
+  }, [selectedWellId, selectedClusterId, selectedAreaId])
 
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground font-sans antialiased">
@@ -64,7 +82,7 @@ export default function WellControlPage() {
         <div className="flex flex-[2] min-h-0 border-b border-border overflow-hidden">
           {/* Production chart */}
           <div className="w-[45%] overflow-hidden">
-            <WellProductionChart selectedWellId={selectedWellId} />
+            <WellProductionChart selection={chartSelection} />
           </div>
           {/* Decline map */}
           <div className="flex-1 overflow-hidden">
@@ -80,7 +98,22 @@ export default function WellControlPage() {
           <WellControlTable
             data={wellControlData}
             selectedWellId={selectedWellId}
-            onWellSelect={(id) => setSelectedWellId(id)}
+            selectedClusterId={selectedClusterId}
+            selectedAreaId={selectedAreaId}
+            onWellSelect={(id) => {
+              setSelectedWellId(id)
+              if (id) { setSelectedClusterId(null); setSelectedAreaId(null) }
+            }}
+            onClusterSelect={(id) => {
+              setSelectedClusterId(id)
+              setSelectedWellId(null)
+              if (id) setSelectedAreaId(null)
+            }}
+            onAreaSelect={(id) => {
+              setSelectedAreaId(id)
+              setSelectedClusterId(null)
+              setSelectedWellId(null)
+            }}
           />
         </div>
       </div>

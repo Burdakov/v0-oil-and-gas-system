@@ -12,8 +12,15 @@ import {
   ResponsiveContainer,
   ReferenceLine,
 } from "recharts"
-import { wellTimeSeries, averageTs, type AveragingPeriod } from "@/lib/well-control-data"
-import { wellControlData } from "@/lib/well-control-data"
+import {
+  wellTimeSeries,
+  clusterTimeSeries,
+  licenseAreaTimeSeries,
+  fieldControlTimeSeries,
+  averageTs,
+  type AveragingPeriod,
+  type ChartSelection,
+} from "@/lib/well-control-data"
 
 // ── Color constants (no CSS vars in Recharts) ─────────────────────────────────
 const CLR = {
@@ -93,9 +100,9 @@ function CustomTooltip({ active, payload, label, period }: {
 }
 
 export function WellProductionChart({
-  selectedWellId,
+  selection,
 }: {
-  selectedWellId: string | null
+  selection: ChartSelection | null
 }) {
   const [period, setPeriod] = useState<AveragingPeriod>("day")
   const [hiddenSeries, setHiddenSeries] = useState<Set<SeriesKey>>(new Set())
@@ -108,15 +115,29 @@ export function WellProductionChart({
     })
   }
 
-  const wellName = useMemo(() => {
-    if (!selectedWellId) return null
-    return wellControlData.find((w) => w.wellId === selectedWellId)?.wellName ?? selectedWellId
-  }, [selectedWellId])
-
-  const rawData = useMemo(() => {
-    if (!selectedWellId) return null
-    return wellTimeSeries[selectedWellId] ?? null
-  }, [selectedWellId])
+  const { title, rawData } = useMemo(() => {
+    if (!selection) return { title: null, rawData: null }
+    if (selection.level === "field") {
+      return { title: "\u041c\u0435\u0441\u0442\u043e\u0440\u043e\u0436\u0434\u0435\u043d\u0438\u0435 \u2014 \u0432\u0435\u0441\u044c \u0444\u043e\u043d\u0434", rawData: fieldControlTimeSeries }
+    }
+    if (selection.level === "area") {
+      return {
+        title: `${selection.areaName}`,
+        rawData: licenseAreaTimeSeries[selection.areaId] ?? null,
+      }
+    }
+    if (selection.level === "cluster") {
+      return {
+        title: `${selection.clusterName}`,
+        rawData: clusterTimeSeries[selection.clusterId] ?? null,
+      }
+    }
+    // well
+    return {
+      title: `\u0421\u043a\u0432. ${selection.wellName}`,
+      rawData: wellTimeSeries[selection.wellId] ?? null,
+    }
+  }, [selection])
 
   const chartData = useMemo(() => {
     if (!rawData) return []
@@ -137,9 +158,9 @@ export function WellProductionChart({
       <div className="flex h-9 shrink-0 items-center justify-between gap-3 border-b border-border px-3">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-[11px] font-semibold text-foreground truncate">
-            {wellName
-              ? `Скв. ${wellName} — история работы`
-              : "Выберите скважину на карте или в таблице"}
+            {title
+              ? `${title} \u2014 \u0438\u0441\u0442\u043e\u0440\u0438\u044f \u0440\u0430\u0431\u043e\u0442\u044b`
+              : "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u044a\u0435\u043a\u0442 \u043d\u0430 \u043a\u0430\u0440\u0442\u0435 \u0438\u043b\u0438 \u0432 \u0442\u0430\u0431\u043b\u0438\u0446\u0435"}
           </span>
         </div>
         {/* Averaging period selector */}
@@ -188,15 +209,15 @@ export function WellProductionChart({
 
       {/* Chart */}
       <div className="flex-1 min-h-0 px-1 py-1">
-        {!selectedWellId ? (
+        {!selection ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-[11px] text-muted-foreground">
-              Нет данных. Выберите добывающую скважину.
+              {"\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435 \u043e\u0431\u044a\u0435\u043a\u0442 \u043d\u0430 \u043a\u0430\u0440\u0442\u0435 \u0438\u043b\u0438 \u0432 \u0442\u0430\u0431\u043b\u0438\u0446\u0435"}
             </p>
           </div>
         ) : chartData.length === 0 ? (
           <div className="flex h-full items-center justify-center">
-            <p className="text-[11px] text-muted-foreground">Нет данных для скважины {selectedWellId}</p>
+            <p className="text-[11px] text-muted-foreground">{"\u041d\u0435\u0442 \u0434\u0430\u043d\u043d\u044b\u0445"}</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height="100%">
