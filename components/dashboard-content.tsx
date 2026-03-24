@@ -91,27 +91,27 @@ export function DashboardContent() {
       {/* Top bar */}
       <header className="flex h-12 shrink-0 items-center justify-between border-b border-border px-6">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="text-foreground font-medium">Обзор месторождения</span>
+          <span className="text-foreground font-medium">{"\u041e\u0431\u0437\u043e\u0440 \u043c\u0435\u0441\u0442\u043e\u0440\u043e\u0436\u0434\u0435\u043d\u0438\u044f"}</span>
           <ChevronRight size={13} />
-          <span>Ромашкинское</span>
+          <span>{"\u0420\u043e\u043c\u0430\u0448\u043a\u0438\u043d\u0441\u043a\u043e\u0435"}</span>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-[11px] text-muted-foreground tabular-nums">
-            Обновлено: 23.03.2026, 09:47
+            {"\u041e\u0431\u043d\u043e\u0432\u043b\u0435\u043d\u043e: 23.03.2026, 09:47"}
           </span>
           <button
             className="flex items-center gap-1.5 rounded border border-border px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Обновить данные"
+            aria-label="\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c \u0434\u0430\u043d\u043d\u044b\u0435"
           >
             <RefreshCw size={12} strokeWidth={1.5} />
-            Обновить
+            {"\u041e\u0431\u043d\u043e\u0432\u0438\u0442\u044c"}
           </button>
           <button
             className="flex items-center gap-1.5 rounded border border-border px-2.5 py-1 text-[12px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            aria-label="Экспортировать отчёт"
+            aria-label="\u042d\u043a\u0441\u043f\u043e\u0440\u0442\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043e\u0442\u0447\u0451\u0442"
           >
             <Download size={12} strokeWidth={1.5} />
-            Экспорт
+            {"\u042d\u043a\u0441\u043f\u043e\u0440\u0442"}
           </button>
         </div>
       </header>
@@ -181,9 +181,9 @@ export function DashboardContent() {
             aria-label="Состояние скважин"
           >
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
-              <h2 className="text-[13px] font-semibold text-foreground">Состояние скважин</h2>
+              <h2 className="text-[13px] font-semibold text-foreground">{"\u0421\u043e\u0441\u0442\u043e\u044f\u043d\u0438\u0435 \u0441\u043a\u0432\u0430\u0436\u0438\u043d"}</h2>
               <button className="text-[11px] text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
-                Все скважины <ChevronRight size={11} />
+                {"\u0412\u0441\u0435 \u0441\u043a\u0432\u0430\u0436\u0438\u043d\u044b"} <ChevronRight size={11} />
               </button>
             </div>
             <div className="overflow-x-auto">
@@ -237,7 +237,7 @@ export function DashboardContent() {
             >
               <div className="flex items-center justify-between border-b border-border px-4 py-3">
                 <div className="flex items-center gap-2">
-                  <h2 className="text-[13px] font-semibold text-foreground">Тревоги</h2>
+                  <h2 className="text-[13px] font-semibold text-foreground">{"\u0422\u0440\u0435\u0432\u043e\u0433\u0438"}</h2>
                   <span className="rounded bg-status-critical/15 px-1.5 py-0.5 text-[10px] font-semibold text-status-critical">
                     2
                   </span>
@@ -264,7 +264,7 @@ export function DashboardContent() {
               className="rounded-md border border-border bg-card px-4 py-4 space-y-3"
               aria-label="Параметры пласта"
             >
-              <h2 className="text-[13px] font-semibold text-foreground">Параметры пласта</h2>
+              <h2 className="text-[13px] font-semibold text-foreground">{"\u041f\u0430\u0440\u0430\u043c\u0435\u0442\u0440\u044b \u043f\u043b\u0430\u0441\u0442\u0430"}</h2>
               <dl className="space-y-2">
                 {[
                   { label: "Пластовое давление", value: "18.3 МПа" },
@@ -290,26 +290,26 @@ export function DashboardContent() {
           aria-label="Карта заводнения"
         >
           <div className="flex items-center justify-between border-b border-border px-4 py-3">
-            <h2 className="text-[13px] font-semibold text-foreground">Карта заводнения — Куст 7 / Куст 12</h2>
+            <h2 className="text-[13px] font-semibold text-foreground">{"\u041a\u0430\u0440\u0442\u0430 \u0437\u0430\u0432\u043e\u0434\u043d\u0435\u043d\u0438\u044f \u2014 \u041a\u0443\u0441\u0442 7 / \u041a\u0443\u0441\u0442 12"}</h2>
             <div className="flex items-center gap-2">
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <span className="inline-block h-2 w-2 rounded-full bg-chart-2" />
-                Нагнетательные
+                {"\u041d\u0430\u0433\u043d\u0435\u0442\u0430\u0442\u0435\u043b\u044c\u043d\u044b\u0435"}
               </span>
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <span className="inline-block h-2 w-2 rounded-full bg-status-active" />
-                Добывающие
+                {"\u0414\u043e\u0431\u044b\u0432\u0430\u044e\u0449\u0438\u0435"}
               </span>
               <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                 <span className="inline-block h-2 w-2 rounded-full bg-status-inactive" />
-                Простой
+                {"\u041f\u0440\u043e\u0441\u0442\u043e\u0439"}
               </span>
             </div>
           </div>
           <div className="flex h-[200px] items-center justify-center text-muted-foreground/40">
             <div className="text-center space-y-1">
-              <p className="text-[13px]">Область карты заводнения</p>
-              <p className="text-[11px]">Интерактивная схема будет размещена здесь</p>
+              <p className="text-[13px]">{"\u041e\u0431\u043b\u0430\u0441\u0442\u044c \u043a\u0430\u0440\u0442\u044b \u0437\u0430\u0432\u043e\u0434\u043d\u0435\u043d\u0438\u044f"}</p>
+              <p className="text-[11px]">{"\u0418\u043d\u0442\u0435\u0440\u0430\u043a\u0442\u0438\u0432\u043d\u0430\u044f \u0441\u0445\u0435\u043c\u0430 \u0431\u0443\u0434\u0435\u0442 \u0440\u0430\u0437\u043c\u0435\u0449\u0435\u043d\u0430 \u0437\u0434\u0435\u0441\u044c"}</p>
             </div>
           </div>
         </section>
