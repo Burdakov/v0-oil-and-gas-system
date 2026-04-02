@@ -147,7 +147,7 @@ export function AppSidebar() {
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Основная навигация">
+      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="\u041e\u0441\u043d\u043e\u0432\u043d\u0430\u044f \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f">
         <ul className="space-y-0.5" role="list">
           {navItems.map((item) => (
             <li key={item.label} className="relative">
@@ -172,7 +172,7 @@ export function AppSidebar() {
             <p className="truncate text-[12px] font-medium text-foreground leading-tight">{"\u0410\u043b\u0435\u043a\u0441\u0435\u0435\u0432 \u0421.\u0412."}</p>
             <p className="truncate text-[10px] text-muted-foreground leading-tight">{"\u0418\u043d\u0436\u0435\u043d\u0435\u0440-\u0433\u0435\u043e\u043b\u043e\u0433"}</p>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Выйти">
+          <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="\u0412\u044b\u0439\u0442\u0438">
             <LogOut size={13} strokeWidth={1.5} />
           </button>
         </div>

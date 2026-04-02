@@ -45,14 +45,14 @@ const CLR = {
   tooltip:     "#0f1e2e",
 }
 
-// Pattern interval background fills — low-opacity solid color, no stroke
+// Pattern interval background fills — semi-transparent backdrop behind lines
 const PATTERN_FILL: Record<PatternKind, string> = {
-  stable:        "rgba(52,211,153,0.06)",
-  kprod_decline: "rgba(239,68,68,0.09)",
-  rpl_decline:   "rgba(59,130,246,0.09)",
-  glf_change:    "rgba(251,191,36,0.07)",
-  tech_effect:   "rgba(167,139,250,0.08)",
-  unstable:      "rgba(249,115,22,0.10)",
+  stable:        "rgba(52,211,153,0.10)",
+  kprod_decline: "rgba(239,68,68,0.16)",
+  rpl_decline:   "rgba(59,130,246,0.16)",
+  glf_change:    "rgba(251,191,36,0.13)",
+  tech_effect:   "rgba(167,139,250,0.14)",
+  unstable:      "rgba(249,115,22,0.17)",
 }
 
 // Used only for classifier strip and legend dots — not for line strokes
