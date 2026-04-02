@@ -17,21 +17,29 @@ export type WellDecline = {
   kprodDecline: number  // % снижения Кпрод
   rplDecline: number    // % снижения Рпл
   obvDecline: number    // % роста Обв (percentage points)
-  // Absolute production declines, т/сут
-  oilDecline: number    // суммарное снижение дебита нефти, т/сут
-  liquidDecline: number // суммарное снижение дебита жидкости, т/сут
-  // Забойное давление
-  bhpDecline: number    // снижение Рзаб, атм
+  // ── Signed factor changes (+ = growth/improvement, − = decline/deterioration) ──
+  vspChange: number     // ВСП: изменение объёма, т/сут
+  kprodChange: number   // Кпрод: изменение, %
+  rplChange: number     // Рпл: изменение, атм
+  techChange: number    // Технология: изменение дебита нефти, т/сут
+  glfChange: number     // ГЖФ (газожидкостный фактор): изменение, м³/т
+  knChange: number      // КН (коэффициент нефтеотдачи): изменение, %
+  fundChange: number    // Фонд: изменение числа скважин (-1 = остановка, +1 = ввод)
+  // Absolute values today / yesterday
+  liquidToday: number       // Дебит жидкости сегодня, м³/сут
+  liquidYesterday: number   // Дебит жидкости вчера, м³/сут
+  oilToday: number          // Дебит нефти сегодня, т/сут
+  oilYesterday: number      // Дебит нефти вчера, т/сут
+  bhpToday: number          // Рзаб сегодня, атм
+  bhpYesterday: number      // Рзаб вчера, атм
   // Состояние скважины
-  wellStatus: "active" | "stopped" // остановленные учитываются как снижение фонда
-  // Скрытый ВСП (виртуальная скважина-перемычка)
-  hiddenVsp: number     // объём скрытого ВСП, т/сут (0 = нет)
+  wellStatus: "active" | "stopped"
   // Dominant factor driving the decline
   dominantFactor: DeclineFactor
-  // Current values
-  kprod: number         // текущий Кпрод, т/(сут·атм)
-  rpl: number           // текущее Рпл, атм
-  obv: number           // текущая обводнённость, %
+  // Current values (legacy kept for chart/map compat)
+  kprod: number
+  rpl: number
+  obv: number
   // Recommended action text
   recommendation: string
   // Status for action: "pending" | "accepted" | "adjusted"
@@ -101,22 +109,35 @@ function buildDeclineData(): WellDecline[] {
         const rpl = r(85, 180, 1)
         const obv = w.current.waterCut
 
-        // Absolute declines derived from current rates and relative decline magnitudes
         const baseLiquid = w.current.liquidRate
         const baseOil = w.current.oilRate
-        const liquidDecline = parseFloat((baseLiquid * (kprodDecline / 100 * 0.6 + rplDecline / 100 * 0.3 + obvDecline / 100 * 0.1)).toFixed(1))
-        const oilDecline = parseFloat((baseOil * (kprodDecline / 100 * 0.55 + rplDecline / 100 * 0.35 + obvDecline / 100 * 0.1)).toFixed(1))
-
-        // Рзаб decline: driven primarily by Рпл drop and Кпрод decline
-        const bhpDecline = parseFloat((rpl * (rplDecline / 100 * 0.7 + kprodDecline / 100 * 0.2)).toFixed(1))
 
         // ~15% wells are stopped — deterministic by index
         const wellStatus: "active" | "stopped" = (idx % 7 === 3) ? "stopped" : "active"
 
-        // ~25% wells have hidden VSP — non-zero volume for those
-        const hiddenVsp = (idx % 4 === 1)
-          ? parseFloat((baseOil * r(0.05, 0.22, 3)).toFixed(1))
-          : 0
+        // ── Signed factor changes ──
+        // VSP: ~25% of wells have hidden VSP, shown as negative (loss)
+        const vspChange = (idx % 4 === 1) ? -parseFloat((baseOil * r(0.05, 0.22, 3)).toFixed(1)) : 0
+        // Кпрод: mostly negative (decline), occasional positive recovery
+        const kprodChange = (idx % 9 === 2) ? r(0.5, 4, 1) : -kprodDecline
+        // Рпл: signed atm change
+        const rplChange = (idx % 11 === 0) ? r(0.5, 3, 1) : -parseFloat((rpl * rplDecline / 100).toFixed(1))
+        // Технология: GTM effect, can be positive
+        const techChange = (idx % 6 === 1) ? r(1, 8, 1) : -parseFloat((baseOil * r(0.01, 0.08, 3)).toFixed(1))
+        // ГЖФ: gas-liquid factor change, м³/т
+        const glfChange = (idx % 5 === 0) ? r(1, 10, 1) : -r(0.5, 8, 1)
+        // КН: oil recovery coefficient change, %
+        const knChange = (idx % 8 === 4) ? r(0.01, 0.15, 2) : -r(0.01, 0.12, 2)
+        // Фонд: -1 stopped, 0 unchanged, +1 new well
+        const fundChange = wellStatus === "stopped" ? -1 : (idx % 15 === 0 ? 1 : 0)
+
+        // ── Absolute values today / yesterday ──
+        const liquidToday = parseFloat(baseLiquid.toFixed(1))
+        const liquidYesterday = parseFloat((baseLiquid * (1 + r(-0.05, 0.05, 4))).toFixed(1))
+        const oilToday = parseFloat(baseOil.toFixed(1))
+        const oilYesterday = parseFloat((baseOil * (1 + r(-0.06, 0.06, 4))).toFixed(1))
+        const bhpToday = parseFloat((rpl * r(0.40, 0.65, 3)).toFixed(1))
+        const bhpYesterday = parseFloat((bhpToday * (1 + r(-0.04, 0.04, 4))).toFixed(1))
 
         result.push({
           wellId: w.id,
@@ -128,11 +149,20 @@ function buildDeclineData(): WellDecline[] {
           kprodDecline,
           rplDecline,
           obvDecline,
-          oilDecline,
-          liquidDecline,
-          bhpDecline,
+          vspChange,
+          kprodChange,
+          rplChange,
+          techChange,
+          glfChange,
+          knChange,
+          fundChange,
+          liquidToday,
+          liquidYesterday,
+          oilToday,
+          oilYesterday,
+          bhpToday,
+          bhpYesterday,
           wellStatus,
-          hiddenVsp,
           dominantFactor: dominant,
           kprod,
           rpl,
