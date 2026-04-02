@@ -27,29 +27,35 @@ import {
 } from "@/lib/well-control-data"
 
 // ── Color constants ────────────────────────────────────────────────────────────
+// All lines use a single neutral slate palette — differentiated by weight/dash only
+const LINE_BASE = "#94a3b8"   // slate-400 — default line color
+const LINE_STRONG = "#cbd5e1" // slate-300 — primary lines (liquid, oil)
+const LINE_DIM = "#64748b"    // slate-500 — secondary lines (vfm, gor)
+
 const CLR = {
-  liquidFact:  "#38bdf8",
-  liquidVfm:   "#7dd3fc",
-  oilFact:     "#f59e0b",
-  waterCut:    "#f43f5e",
-  intakePres:  "#a78bfa",
-  bhp:         "#818cf8",
-  gasFactor:   "#34d399",
+  liquidFact:  LINE_STRONG,
+  liquidVfm:   LINE_DIM,
+  oilFact:     LINE_STRONG,
+  waterCut:    LINE_BASE,
+  intakePres:  LINE_DIM,
+  bhp:         LINE_BASE,
+  gasFactor:   LINE_DIM,
   grid:        "#1e2d3d",
   axis:        "#475569",
   tooltip:     "#0f1e2e",
 }
 
-// Pattern interval fill colors (very low opacity background)
+// Pattern interval background fills — low-opacity solid color, no stroke
 const PATTERN_FILL: Record<PatternKind, string> = {
-  stable:        "rgba(52,211,153,0.07)",   // emerald
-  kprod_decline: "rgba(239,68,68,0.10)",    // red
-  rpl_decline:   "rgba(59,130,246,0.10)",   // blue
-  glf_change:    "rgba(251,191,36,0.08)",   // amber
-  tech_effect:   "rgba(167,139,250,0.09)",  // violet
-  unstable:      "rgba(249,115,22,0.12)",   // orange
+  stable:        "rgba(52,211,153,0.06)",
+  kprod_decline: "rgba(239,68,68,0.09)",
+  rpl_decline:   "rgba(59,130,246,0.09)",
+  glf_change:    "rgba(251,191,36,0.07)",
+  tech_effect:   "rgba(167,139,250,0.08)",
+  unstable:      "rgba(249,115,22,0.10)",
 }
 
+// Used only for classifier strip and legend dots — not for line strokes
 const PATTERN_STROKE: Record<PatternKind, string> = {
   stable:        "#34d399",
   kprod_decline: "#ef4444",
@@ -370,18 +376,16 @@ export function WellProductionChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 4, right: 36, bottom: 16, left: 4 }}>
 
-              {/* Interval background fills */}
+              {/* Interval background fills — transparent backdrop, no border */}
               {derivedSegments.map((seg, i) => (
                 <ReferenceArea
                   key={i}
                   x1={seg.startDate}
                   x2={seg.endDate}
                   fill={PATTERN_FILL[seg.kind]}
-                  stroke={PATTERN_STROKE[seg.kind]}
-                  strokeOpacity={0.25}
-                  strokeWidth={0.5}
+                  stroke="none"
                   label={chartDates.indexOf(seg.startDate) >= 0 && (chartDates.indexOf(seg.endDate) - chartDates.indexOf(seg.startDate)) > 6
-                    ? { value: seg.label, position: "insideTopLeft", style: { fontSize: 8, fill: PATTERN_STROKE[seg.kind], opacity: 0.8 } }
+                    ? { value: seg.label, position: "insideTopLeft", style: { fontSize: 8, fill: PATTERN_STROKE[seg.kind], opacity: 0.7 } }
                     : undefined
                   }
                 />
