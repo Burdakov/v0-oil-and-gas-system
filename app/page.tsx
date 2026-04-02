@@ -1,5 +1,10 @@
+import dynamic from "next/dynamic"
 import { AppSidebar } from "@/components/app-sidebar"
-import { DashboardContent } from "@/components/dashboard-content"
+
+const DashboardContent = dynamic(
+  () => import("@/components/dashboard-content").then((m) => ({ default: m.DashboardContent })),
+  { ssr: false }
+)
 
 export default function Home() {
   return (

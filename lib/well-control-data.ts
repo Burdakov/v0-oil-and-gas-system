@@ -187,6 +187,27 @@ function buildDeclineData(): WellDecline[] {
 export const wellControlData: WellDecline[] = buildDeclineData()
 
 // ── Well production time-series ───────────────────────────────────────────────
+// Daily cause keys for dot coloring and classifier strip
+export type DailyCause =
+  | "stable"   // стабильная работа
+  | "kprod"    // снижение Кпрод / кольматаж
+  | "rpl"      // снижение Рпл
+  | "tech"     // технологический эффект (ГТМ, оптимизация)
+  | "glf"      // изменение ГЖФ
+  | "vsp"      // ВСП
+  | "fund"     // изменение фонда (остановка/ввод)
+  | "unstable" // нестабильность
+
+// Broader pattern segment (interval fill)
+export type PatternKind = "stable" | "kprod_decline" | "rpl_decline" | "glf_change" | "tech_effect" | "unstable"
+
+export type PatternSegment = {
+  startDate: string
+  endDate: string
+  kind: PatternKind
+  label: string
+}
+
 export type WellTsPoint = {
   date: string            // "YYYY-MM-DD"
   liquidFact: number      // Дебит жидкости, м³/сут
@@ -196,9 +217,62 @@ export type WellTsPoint = {
   intakePressure: number  // Давление на приёме насоса, атм
   bottomholePressure: number // Забойное давление, атм
   gasFactor: number       // Газовый фактор, м³/т
+  dailyCause: DailyCause  // доминирующая причина за сутки
 }
 
 export type AveragingPeriod = "raw" | "day" | "month" | "year"
+
+// Daily cause sequence: deterministic blocks of varying length
+function buildCauseSequence(n: number, seed: number): DailyCause[] {
+  let s = seed >>> 0
+  function rng() {
+    s += 0x6d2b79f5
+    let t = Math.imul(s ^ (s >>> 15), 1 | s)
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+    return ((t ^ (t >>> 14)) >>> 0) / 0x100000000
+  }
+  const causes: DailyCause[] = ["stable", "kprod", "rpl", "tech", "glf", "vsp", "unstable"]
+  const seq: DailyCause[] = []
+  while (seq.length < n) {
+    const cause = causes[Math.floor(rng() * causes.length)]
+    const len = 7 + Math.floor(rng() * 28) // 7–34 days per segment
+    for (let k = 0; k < len && seq.length < n; k++) seq.push(cause)
+  }
+  return seq
+}
+
+// Map daily cause → broader pattern kind for interval fills
+function causeToPattern(cause: DailyCause): PatternKind {
+  if (cause === "stable") return "stable"
+  if (cause === "kprod")  return "kprod_decline"
+  if (cause === "rpl")    return "rpl_decline"
+  if (cause === "glf")    return "glf_change"
+  if (cause === "tech")   return "tech_effect"
+  return "unstable"
+}
+
+const PATTERN_LABELS: Record<PatternKind, string> = {
+  stable:       "\u0421\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u0430\u044f \u0440\u0430\u0431\u043e\u0442\u0430",
+  kprod_decline:"\u0421\u043d\u0438\u0436\u0435\u043d\u0438\u0435 \u041a\u043f\u0440\u043e\u0434",
+  rpl_decline:  "\u0421\u043d\u0438\u0436\u0435\u043d\u0438\u0435 \u0420\u043f\u043b",
+  glf_change:   "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0413\u0416\u0424",
+  tech_effect:  "\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u044f / \u0413\u0422\u041c",
+  unstable:     "\u041d\u0435\u0441\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c",
+}
+
+// Build PatternSegments from a cause sequence + date array
+function buildSegments(dates: string[], causes: DailyCause[]): PatternSegment[] {
+  const segs: PatternSegment[] = []
+  let i = 0
+  while (i < dates.length) {
+    const kind = causeToPattern(causes[i])
+    let j = i + 1
+    while (j < dates.length && causeToPattern(causes[j]) === kind) j++
+    segs.push({ startDate: dates[i], endDate: dates[j - 1], kind, label: PATTERN_LABELS[kind] })
+    i = j
+  }
+  return segs
+}
 
 // Generate 180 daily points (≈ 6 months ending 2026-03-23)
 function generateWellTs(
@@ -221,6 +295,7 @@ function generateWellTs(
   const endMs = new Date("2026-03-23").getTime()
   const dayMs = 86400_000
   const n = 180
+  const causeSeq = buildCauseSequence(n, seed + 99999)
   const pts: WellTsPoint[] = []
 
   for (let i = 0; i < n; i++) {
@@ -228,9 +303,7 @@ function generateWellTs(
     const date = new Date(endMs - (n - 1 - i) * dayMs).toISOString().slice(0, 10)
     const noise = () => (rng() - 0.5) * 2
 
-    // Slight decline trend + daily noise
     const liqFact = Math.max(5, baseLiquid * (1 - 0.06 * t) + noise() * baseLiquid * 0.05)
-    // VFM slightly diverges from fact (±3–5%)
     const liqVfm = Math.max(5, liqFact * (1 + (rng() - 0.5) * 0.08))
     const wc = Math.min(98, Math.max(1, baseWc + t * 2.5 + noise() * 1.2))
     const oilFact = Math.max(0.5, liqFact * (1 - wc / 100))
@@ -247,6 +320,7 @@ function generateWellTs(
       intakePressure: Math.round(intake * 10) / 10,
       bottomholePressure: Math.round(bhp * 10) / 10,
       gasFactor: Math.round(gor * 10) / 10,
+      dailyCause: causeSeq[i],
     })
   }
   return pts
@@ -273,16 +347,23 @@ export function averageTs(pts: WellTsPoint[], period: AveragingPeriod): WellTsPo
     return Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 10) / 10
   }
 
-  return Array.from(groups.entries()).map(([k, group]) => ({
-    date: period === "month" ? k + "-15" : period === "year" ? k + "-07-01" : k,
-    liquidFact: avg(group.map((p) => p.liquidFact)),
-    liquidVfm: avg(group.map((p) => p.liquidVfm)),
-    oilFact: avg(group.map((p) => p.oilFact)),
-    waterCut: avg(group.map((p) => p.waterCut)),
-    intakePressure: avg(group.map((p) => p.intakePressure)),
-    bottomholePressure: avg(group.map((p) => p.bottomholePressure)),
-    gasFactor: avg(group.map((p) => p.gasFactor)),
-  }))
+  return Array.from(groups.entries()).map(([k, group]) => {
+    // Modal dailyCause for the group
+    const causeCount: Partial<Record<DailyCause, number>> = {}
+    for (const p of group) causeCount[p.dailyCause] = (causeCount[p.dailyCause] ?? 0) + 1
+    const modalCause = (Object.entries(causeCount).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] ?? "stable") as DailyCause
+    return {
+      date: period === "month" ? k + "-15" : period === "year" ? k + "-07-01" : k,
+      liquidFact: avg(group.map((p) => p.liquidFact)),
+      liquidVfm: avg(group.map((p) => p.liquidVfm)),
+      oilFact: avg(group.map((p) => p.oilFact)),
+      waterCut: avg(group.map((p) => p.waterCut)),
+      intakePressure: avg(group.map((p) => p.intakePressure)),
+      bottomholePressure: avg(group.map((p) => p.bottomholePressure)),
+      gasFactor: avg(group.map((p) => p.gasFactor)),
+      dailyCause: modalCause,
+    }
+  })
 }
 
 // Pre-generated per-well time series keyed by wellId
@@ -314,6 +395,16 @@ export const wellTimeSeries: Record<string, WellTsPoint[]> = Object.fromEntries(
   ])
 )
 
+// Per-well pattern segments derived from the generated time series
+export const wellPatternSegments: Record<string, PatternSegment[]> = Object.fromEntries(
+  Object.entries(wellTimeSeries).map(([id, pts]) => [
+    id,
+    buildSegments(pts.map((p) => p.date), pts.map((p) => p.dailyCause)),
+  ])
+)
+
+export { PATTERN_LABELS }
+
 // Aggregate multiple well series into one by summing rates, averaging pressures/wc/gor
 function aggregateWellTs(seriesList: WellTsPoint[][]): WellTsPoint[] {
   if (seriesList.length === 0) return []
@@ -335,6 +426,7 @@ function aggregateWellTs(seriesList: WellTsPoint[][]): WellTsPoint[] {
       intakePressure:      mean((p) => p.intakePressure),
       bottomholePressure:  mean((p) => p.bottomholePressure),
       gasFactor:           mean((p) => p.gasFactor),
+      dailyCause:          pts[0].dailyCause,
     })
   }
   return result
