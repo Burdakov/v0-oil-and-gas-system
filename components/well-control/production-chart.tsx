@@ -376,7 +376,9 @@ export function WellProductionChart({
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={chartData} margin={{ top: 4, right: 36, bottom: 16, left: 4 }}>
 
-              {/* Interval background fills — transparent backdrop, no border */}
+              <CartesianGrid strokeDasharray="3 3" stroke={CLR.grid} vertical={false} />
+
+              {/* Interval background fills — render after grid but before lines */}
               {derivedSegments.map((seg, i) => (
                 <ReferenceArea
                   key={i}
@@ -390,8 +392,6 @@ export function WellProductionChart({
                   }
                 />
               ))}
-
-              <CartesianGrid strokeDasharray="3 3" stroke={CLR.grid} vertical={false} />
 
               <XAxis
                 dataKey="date"
