@@ -78,10 +78,10 @@ export default function WellControlPage() {
           </div>
         </header>
 
-        {/* Top row: Chart (left 45%) + Map (right 55%) */}
-        <div className="flex flex-[2] min-h-0 border-b border-border overflow-hidden">
+        {/* Top row: Chart (left 55%) + Map (right 45%) */}
+        <div className="flex flex-[3] min-h-0 border-b border-border overflow-hidden">
           {/* Production chart */}
-          <div className="w-[45%] overflow-hidden">
+          <div className="w-[55%] border-r border-border overflow-hidden">
             <WellProductionChart selection={chartSelection} />
           </div>
           {/* Decline map */}
@@ -94,7 +94,7 @@ export default function WellControlPage() {
           </div>
         </div>
 
-        <div className="flex-[3] overflow-hidden min-h-0">
+        <div className="flex-[2] overflow-hidden min-h-0">
           <WellControlTable
             data={wellControlData}
             selectedWellId={selectedWellId}

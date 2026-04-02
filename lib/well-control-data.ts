@@ -17,21 +17,29 @@ export type WellDecline = {
   kprodDecline: number  // % снижения Кпрод
   rplDecline: number    // % снижения Рпл
   obvDecline: number    // % роста Обв (percentage points)
-  // Absolute production declines, т/сут
-  oilDecline: number    // суммарное снижение дебита нефти, т/сут
-  liquidDecline: number // суммарное снижение дебита жидкости, т/сут
-  // Забойное давление
-  bhpDecline: number    // снижение Рзаб, атм
+  // ── Signed factor changes (+ = growth/improvement, − = decline/deterioration) ──
+  vspChange: number     // ВСП: изменение объёма, т/сут
+  kprodChange: number   // Кпрод: изменение, %
+  rplChange: number     // Рпл: изменение, атм
+  techChange: number    // Технология: изменение дебита нефти, т/сут
+  glfChange: number     // ГЖФ (газожидкостный фактор): изменение, м³/т
+  knChange: number      // КН (коэффициент нефтеотдачи): изменение, %
+  fundChange: number    // Фонд: изменение числа скважин (-1 = остановка, +1 = ввод)
+  // Absolute values today / yesterday
+  liquidToday: number       // Дебит жидкости сегодня, м³/сут
+  liquidYesterday: number   // Дебит жидкости вчера, м³/сут
+  oilToday: number          // Дебит нефти сегодня, т/сут
+  oilYesterday: number      // Дебит нефти вчера, т/сут
+  bhpToday: number          // Рзаб сегодня, атм
+  bhpYesterday: number      // Рзаб вчера, атм
   // Состояние скважины
-  wellStatus: "active" | "stopped" // остановленные учитываются как снижение фонда
-  // Скрытый ВСП (виртуальная скважина-перемычка)
-  hiddenVsp: number     // объём скрытого ВСП, т/сут (0 = нет)
+  wellStatus: "active" | "stopped"
   // Dominant factor driving the decline
   dominantFactor: DeclineFactor
-  // Current values
-  kprod: number         // текущий Кпрод, т/(сут·атм)
-  rpl: number           // текущее Рпл, атм
-  obv: number           // текущая обводнённость, %
+  // Current values (legacy kept for chart/map compat)
+  kprod: number
+  rpl: number
+  obv: number
   // Recommended action text
   recommendation: string
   // Status for action: "pending" | "accepted" | "adjusted"
@@ -101,22 +109,35 @@ function buildDeclineData(): WellDecline[] {
         const rpl = r(85, 180, 1)
         const obv = w.current.waterCut
 
-        // Absolute declines derived from current rates and relative decline magnitudes
         const baseLiquid = w.current.liquidRate
         const baseOil = w.current.oilRate
-        const liquidDecline = parseFloat((baseLiquid * (kprodDecline / 100 * 0.6 + rplDecline / 100 * 0.3 + obvDecline / 100 * 0.1)).toFixed(1))
-        const oilDecline = parseFloat((baseOil * (kprodDecline / 100 * 0.55 + rplDecline / 100 * 0.35 + obvDecline / 100 * 0.1)).toFixed(1))
-
-        // Рзаб decline: driven primarily by Рпл drop and Кпрод decline
-        const bhpDecline = parseFloat((rpl * (rplDecline / 100 * 0.7 + kprodDecline / 100 * 0.2)).toFixed(1))
 
         // ~15% wells are stopped — deterministic by index
         const wellStatus: "active" | "stopped" = (idx % 7 === 3) ? "stopped" : "active"
 
-        // ~25% wells have hidden VSP — non-zero volume for those
-        const hiddenVsp = (idx % 4 === 1)
-          ? parseFloat((baseOil * r(0.05, 0.22, 3)).toFixed(1))
-          : 0
+        // ── Signed factor changes ──
+        // VSP: ~25% of wells have hidden VSP, shown as negative (loss)
+        const vspChange = (idx % 4 === 1) ? -parseFloat((baseOil * r(0.05, 0.22, 3)).toFixed(1)) : 0
+        // Кпрод: mostly negative (decline), occasional positive recovery
+        const kprodChange = (idx % 9 === 2) ? r(0.5, 4, 1) : -kprodDecline
+        // Рпл: signed atm change
+        const rplChange = (idx % 11 === 0) ? r(0.5, 3, 1) : -parseFloat((rpl * rplDecline / 100).toFixed(1))
+        // Технология: GTM effect, can be positive
+        const techChange = (idx % 6 === 1) ? r(1, 8, 1) : -parseFloat((baseOil * r(0.01, 0.08, 3)).toFixed(1))
+        // ГЖФ: gas-liquid factor change, м³/т
+        const glfChange = (idx % 5 === 0) ? r(1, 10, 1) : -r(0.5, 8, 1)
+        // КН: oil recovery coefficient change, %
+        const knChange = (idx % 8 === 4) ? r(0.01, 0.15, 2) : -r(0.01, 0.12, 2)
+        // Фонд: -1 stopped, 0 unchanged, +1 new well
+        const fundChange = wellStatus === "stopped" ? -1 : (idx % 15 === 0 ? 1 : 0)
+
+        // ── Absolute values today / yesterday ──
+        const liquidToday = parseFloat(baseLiquid.toFixed(1))
+        const liquidYesterday = parseFloat((baseLiquid * (1 + r(-0.05, 0.05, 4))).toFixed(1))
+        const oilToday = parseFloat(baseOil.toFixed(1))
+        const oilYesterday = parseFloat((baseOil * (1 + r(-0.06, 0.06, 4))).toFixed(1))
+        const bhpToday = parseFloat((rpl * r(0.40, 0.65, 3)).toFixed(1))
+        const bhpYesterday = parseFloat((bhpToday * (1 + r(-0.04, 0.04, 4))).toFixed(1))
 
         result.push({
           wellId: w.id,
@@ -128,11 +149,20 @@ function buildDeclineData(): WellDecline[] {
           kprodDecline,
           rplDecline,
           obvDecline,
-          oilDecline,
-          liquidDecline,
-          bhpDecline,
+          vspChange,
+          kprodChange,
+          rplChange,
+          techChange,
+          glfChange,
+          knChange,
+          fundChange,
+          liquidToday,
+          liquidYesterday,
+          oilToday,
+          oilYesterday,
+          bhpToday,
+          bhpYesterday,
           wellStatus,
-          hiddenVsp,
           dominantFactor: dominant,
           kprod,
           rpl,
@@ -157,6 +187,27 @@ function buildDeclineData(): WellDecline[] {
 export const wellControlData: WellDecline[] = buildDeclineData()
 
 // ── Well production time-series ───────────────────────────────────────────────
+// Daily cause keys for dot coloring and classifier strip
+export type DailyCause =
+  | "stable"   // стабильная работа
+  | "kprod"    // снижение Кпрод / кольматаж
+  | "rpl"      // снижение Рпл
+  | "tech"     // технологический эффект (ГТМ, оптимизация)
+  | "glf"      // изменение ГЖФ
+  | "vsp"      // ВСП
+  | "fund"     // изменение фонда (остановка/ввод)
+  | "unstable" // нестабильность
+
+// Broader pattern segment (interval fill)
+export type PatternKind = "stable" | "kprod_decline" | "rpl_decline" | "glf_change" | "tech_effect" | "unstable"
+
+export type PatternSegment = {
+  startDate: string
+  endDate: string
+  kind: PatternKind
+  label: string
+}
+
 export type WellTsPoint = {
   date: string            // "YYYY-MM-DD"
   liquidFact: number      // Дебит жидкости, м³/сут
@@ -166,9 +217,62 @@ export type WellTsPoint = {
   intakePressure: number  // Давление на приёме насоса, атм
   bottomholePressure: number // Забойное давление, атм
   gasFactor: number       // Газовый фактор, м³/т
+  dailyCause: DailyCause  // доминирующая причина за сутки
 }
 
 export type AveragingPeriod = "raw" | "day" | "month" | "year"
+
+// Daily cause sequence: deterministic blocks of varying length
+function buildCauseSequence(n: number, seed: number): DailyCause[] {
+  let s = seed >>> 0
+  function rng() {
+    s += 0x6d2b79f5
+    let t = Math.imul(s ^ (s >>> 15), 1 | s)
+    t ^= t + Math.imul(t ^ (t >>> 7), 61 | t)
+    return ((t ^ (t >>> 14)) >>> 0) / 0x100000000
+  }
+  const causes: DailyCause[] = ["stable", "kprod", "rpl", "tech", "glf", "vsp", "unstable"]
+  const seq: DailyCause[] = []
+  while (seq.length < n) {
+    const cause = causes[Math.floor(rng() * causes.length)]
+    const len = 7 + Math.floor(rng() * 28) // 7–34 days per segment
+    for (let k = 0; k < len && seq.length < n; k++) seq.push(cause)
+  }
+  return seq
+}
+
+// Map daily cause → broader pattern kind for interval fills
+function causeToPattern(cause: DailyCause): PatternKind {
+  if (cause === "stable") return "stable"
+  if (cause === "kprod")  return "kprod_decline"
+  if (cause === "rpl")    return "rpl_decline"
+  if (cause === "glf")    return "glf_change"
+  if (cause === "tech")   return "tech_effect"
+  return "unstable"
+}
+
+const PATTERN_LABELS: Record<PatternKind, string> = {
+  stable:       "\u0421\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u0430\u044f \u0440\u0430\u0431\u043e\u0442\u0430",
+  kprod_decline:"\u0421\u043d\u0438\u0436\u0435\u043d\u0438\u0435 \u041a\u043f\u0440\u043e\u0434",
+  rpl_decline:  "\u0421\u043d\u0438\u0436\u0435\u043d\u0438\u0435 \u0420\u043f\u043b",
+  glf_change:   "\u0418\u0437\u043c\u0435\u043d\u0435\u043d\u0438\u0435 \u0413\u0416\u0424",
+  tech_effect:  "\u0422\u0435\u0445\u043d\u043e\u043b\u043e\u0433\u0438\u044f / \u0413\u0422\u041c",
+  unstable:     "\u041d\u0435\u0441\u0442\u0430\u0431\u0438\u043b\u044c\u043d\u043e\u0441\u0442\u044c",
+}
+
+// Build PatternSegments from a cause sequence + date array
+function buildSegments(dates: string[], causes: DailyCause[]): PatternSegment[] {
+  const segs: PatternSegment[] = []
+  let i = 0
+  while (i < dates.length) {
+    const kind = causeToPattern(causes[i])
+    let j = i + 1
+    while (j < dates.length && causeToPattern(causes[j]) === kind) j++
+    segs.push({ startDate: dates[i], endDate: dates[j - 1], kind, label: PATTERN_LABELS[kind] })
+    i = j
+  }
+  return segs
+}
 
 // Generate 180 daily points (≈ 6 months ending 2026-03-23)
 function generateWellTs(
@@ -191,6 +295,7 @@ function generateWellTs(
   const endMs = new Date("2026-03-23").getTime()
   const dayMs = 86400_000
   const n = 180
+  const causeSeq = buildCauseSequence(n, seed + 99999)
   const pts: WellTsPoint[] = []
 
   for (let i = 0; i < n; i++) {
@@ -198,9 +303,7 @@ function generateWellTs(
     const date = new Date(endMs - (n - 1 - i) * dayMs).toISOString().slice(0, 10)
     const noise = () => (rng() - 0.5) * 2
 
-    // Slight decline trend + daily noise
     const liqFact = Math.max(5, baseLiquid * (1 - 0.06 * t) + noise() * baseLiquid * 0.05)
-    // VFM slightly diverges from fact (±3–5%)
     const liqVfm = Math.max(5, liqFact * (1 + (rng() - 0.5) * 0.08))
     const wc = Math.min(98, Math.max(1, baseWc + t * 2.5 + noise() * 1.2))
     const oilFact = Math.max(0.5, liqFact * (1 - wc / 100))
@@ -217,6 +320,7 @@ function generateWellTs(
       intakePressure: Math.round(intake * 10) / 10,
       bottomholePressure: Math.round(bhp * 10) / 10,
       gasFactor: Math.round(gor * 10) / 10,
+      dailyCause: causeSeq[i],
     })
   }
   return pts
@@ -243,16 +347,23 @@ export function averageTs(pts: WellTsPoint[], period: AveragingPeriod): WellTsPo
     return Math.round((arr.reduce((s, v) => s + v, 0) / arr.length) * 10) / 10
   }
 
-  return Array.from(groups.entries()).map(([k, group]) => ({
-    date: period === "month" ? k + "-15" : period === "year" ? k + "-07-01" : k,
-    liquidFact: avg(group.map((p) => p.liquidFact)),
-    liquidVfm: avg(group.map((p) => p.liquidVfm)),
-    oilFact: avg(group.map((p) => p.oilFact)),
-    waterCut: avg(group.map((p) => p.waterCut)),
-    intakePressure: avg(group.map((p) => p.intakePressure)),
-    bottomholePressure: avg(group.map((p) => p.bottomholePressure)),
-    gasFactor: avg(group.map((p) => p.gasFactor)),
-  }))
+  return Array.from(groups.entries()).map(([k, group]) => {
+    // Modal dailyCause for the group
+    const causeCount: Partial<Record<DailyCause, number>> = {}
+    for (const p of group) causeCount[p.dailyCause] = (causeCount[p.dailyCause] ?? 0) + 1
+    const modalCause = (Object.entries(causeCount).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] ?? "stable") as DailyCause
+    return {
+      date: period === "month" ? k + "-15" : period === "year" ? k + "-07-01" : k,
+      liquidFact: avg(group.map((p) => p.liquidFact)),
+      liquidVfm: avg(group.map((p) => p.liquidVfm)),
+      oilFact: avg(group.map((p) => p.oilFact)),
+      waterCut: avg(group.map((p) => p.waterCut)),
+      intakePressure: avg(group.map((p) => p.intakePressure)),
+      bottomholePressure: avg(group.map((p) => p.bottomholePressure)),
+      gasFactor: avg(group.map((p) => p.gasFactor)),
+      dailyCause: modalCause,
+    }
+  })
 }
 
 // Pre-generated per-well time series keyed by wellId
@@ -284,6 +395,16 @@ export const wellTimeSeries: Record<string, WellTsPoint[]> = Object.fromEntries(
   ])
 )
 
+// Per-well pattern segments derived from the generated time series
+export const wellPatternSegments: Record<string, PatternSegment[]> = Object.fromEntries(
+  Object.entries(wellTimeSeries).map(([id, pts]) => [
+    id,
+    buildSegments(pts.map((p) => p.date), pts.map((p) => p.dailyCause)),
+  ])
+)
+
+export { PATTERN_LABELS }
+
 // Aggregate multiple well series into one by summing rates, averaging pressures/wc/gor
 function aggregateWellTs(seriesList: WellTsPoint[][]): WellTsPoint[] {
   if (seriesList.length === 0) return []
@@ -305,6 +426,7 @@ function aggregateWellTs(seriesList: WellTsPoint[][]): WellTsPoint[] {
       intakePressure:      mean((p) => p.intakePressure),
       bottomholePressure:  mean((p) => p.bottomholePressure),
       gasFactor:           mean((p) => p.gasFactor),
+      dailyCause:          pts[0].dailyCause,
     })
   }
   return result

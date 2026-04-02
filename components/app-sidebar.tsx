@@ -25,17 +25,17 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   {
-    label: "Контроль фонда",
+    label: "\u041a\u043e\u043d\u0442\u0440\u043e\u043b\u044c \u0444\u043e\u043d\u0434\u0430",
     icon: Layers,
     href: "/well-control",
   },
   {
-    label: "Топ ИДН",
+    label: "\u0422\u043e\u043f \u0418\u0414\u041d",
     icon: TrendingUp,
     href: "/idn",
   },
   {
-    label: "Ячейки заводнения",
+    label: "\u042f\u0447\u0435\u0439\u043a\u0438 \u0437\u0430\u0432\u043e\u0434\u043d\u0435\u043d\u0438\u044f",
     icon: Grid3x3,
     href: "/flood-cells",
   },
@@ -147,7 +147,7 @@ export function AppSidebar() {
       </Link>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="Основная навигация">
+      <nav className="flex-1 overflow-y-auto px-3 py-3" aria-label="\u041e\u0441\u043d\u043e\u0432\u043d\u0430\u044f \u043d\u0430\u0432\u0438\u0433\u0430\u0446\u0438\u044f">
         <ul className="space-y-0.5" role="list">
           {navItems.map((item) => (
             <li key={item.label} className="relative">
@@ -161,18 +161,18 @@ export function AppSidebar() {
       <div className="border-t border-border px-3 py-3 space-y-1">
         <button className="flex w-full items-center gap-2.5 rounded px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
           <Bell size={15} strokeWidth={1.5} className="shrink-0" />
-          <span className="flex-1 text-left text-[13px]">Уведомления</span>
+          <span className="flex-1 text-left text-[13px]">{"\u0423\u0432\u0435\u0434\u043e\u043c\u043b\u0435\u043d\u0438\u044f"}</span>
           <span className="rounded bg-status-critical/20 px-1.5 py-0.5 text-[10px] font-semibold text-status-critical">2</span>
         </button>
         <div className="flex items-center gap-2.5 rounded px-2.5 py-1.5">
           <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-muted text-[10px] font-bold text-muted-foreground">
-            АС
+            {"\u0410\u0421"}
           </div>
           <div className="min-w-0 flex-1">
             <p className="truncate text-[12px] font-medium text-foreground leading-tight">{"\u0410\u043b\u0435\u043a\u0441\u0435\u0435\u0432 \u0421.\u0412."}</p>
             <p className="truncate text-[10px] text-muted-foreground leading-tight">{"\u0418\u043d\u0436\u0435\u043d\u0435\u0440-\u0433\u0435\u043e\u043b\u043e\u0433"}</p>
           </div>
-          <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="Выйти">
+          <button className="text-muted-foreground hover:text-foreground transition-colors" aria-label="\u0412\u044b\u0439\u0442\u0438">
             <LogOut size={13} strokeWidth={1.5} />
           </button>
         </div>
